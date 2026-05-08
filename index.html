@@ -1773,6 +1773,7 @@ function gotoScreen(id, btn) {
     startSession(next.id);
     return;
   }
+  if (id === 'settings') { renderSettings(); }
   showScreen(id);
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
@@ -1807,6 +1808,112 @@ function updateTimerDisplay() {
   const m = Math.floor(timerSeconds / 60);
   const s = timerSeconds % 60;
   document.getElementById('modal-timer-display').textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+// ═══════════════════════════════════════════════════════
+// SETTINGS SCREEN
+// ═══════════════════════════════════════════════════════
+
+function renderSettings() {
+  const user = state.user;
+  const sessions = state.sessions || [];
+
+  let html = '';
+
+  if (!user) {
+    html = `
+      <div class="sec-label" style="padding:0;">Your profile</div>
+      <div class="card mb12">
+        <div class="card-sub">No profile yet — complete onboarding first.</div>
+      </div>`;
+  } else {
+    html += `
+      <div class="sec-label" style="padding:0;">Your profile</div>
+      <div class="card mb12">
+        <div class="flex-between">
+          <div>
+            <div class="fw700">${user.name || '—'}</div>
+            <div class="font-mono font-xs text-dim mt12">${user.skill ? 'Training: ' + (state.program?.skillLabel || user.skill) : 'No skill selected'}</div>
+          </div>
+          <div class="badge badge-accent">Phase ${state.program?.phase || 1}</div>
+        </div>
+      </div>
+
+      <div class="sec-label" style="padding:0;">Data</div>
+      <div class="card mb12">
+        <div class="flex-between mb12">
+          <div class="fw700 font-sm">Total sessions logged</div>
+          <div class="font-mono font-xs text-accent">${sessions.length}</div>
+        </div>
+        <div class="flex-between">
+          <div class="fw700 font-sm">Storage used</div>
+          <div class="font-mono font-xs text-dim">${getStorageSize()}</div>
+        </div>
+      </div>
+
+      <div class="sec-label" style="padding:0;">Danger zone</div>
+      <div class="card mb12">
+        <div class="card-title mb8" style="color:var(--coral);">Reset app</div>
+        <div class="card-sub mb12">Clears all your data — profile, program, session logs, and progress. This cannot be undone.</div>
+        <button class="btn btn-danger btn-sm" onclick="confirmReset()">Reset everything</button>
+      </div>`;
+  }
+
+  html += `
+    <div class="sec-label" style="padding:0;">About</div>
+    <div class="card mb12">
+      <div class="flex-between mb8">
+        <div class="fw700 font-sm">FlexTrack</div>
+        <div class="font-mono font-xs text-dim">v1.0</div>
+      </div>
+      <div class="card-sub">Built around the Mobility & Flexibility Toolkit by Matt Smith. Program logic derived from course material on pike, pancake, and side split training.</div>
+    </div>
+    <div style="height:16px;"></div>`;
+
+  document.getElementById('settings-content').innerHTML = html;
+}
+
+function getStorageSize() {
+  try {
+    const data = localStorage.getItem('flextrack_state') || '';
+    const bytes = new Blob([data]).size;
+    if (bytes < 1024) return bytes + ' B';
+    return (bytes / 1024).toFixed(1) + ' KB';
+  } catch(e) { return '—'; }
+}
+
+function confirmReset() {
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay active';
+  modal.innerHTML = `
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Reset FlexTrack?</div>
+      <div class="card-sub mb16">This will permanently delete your profile, program, and all ${(state.sessions||[]).length} session logs. There is no undo.</div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-secondary" style="flex:1" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+        <button class="btn btn-danger" style="flex:1" onclick="resetApp()">Yes, reset</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+function resetApp() {
+  try { localStorage.removeItem('flextrack_state'); } catch(e) {}
+  state = { user: null, program: null, sessions: [], currentSession: null };
+  // Remove any stray modals
+  document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
+  // Hide nav, go back to onboarding
+  document.getElementById('bottom-nav').style.display = 'none';
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.nav-btn')?.classList.add('active');
+  // Reset onboarding fields
+  document.getElementById('ob-name').value = '';
+  document.querySelectorAll('#ob-skill-select .option-pill').forEach(p => p.classList.remove('selected'));
+  selectedSkill = null;
+  assessAnswers = {};
+  assessStep = 0;
+  showScreen('onboard');
 }
 
 // ═══════════════════════════════════════════════════════
