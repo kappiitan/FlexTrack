@@ -256,9 +256,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
           <div class="option-pill" data-val="pike">🔱 Pike</div>
           <div class="option-pill" data-val="pancake">🥞 Pancake</div>
           <div class="option-pill" data-val="sidesplit">⚡ Side Split</div>
+          <div class="option-pill" data-val="combined">🎯 All Three</div>
         </div>
       </div>
-      <div class="note-box">Select one skill to focus on. After completing Phase 1 you can add more skills or combine programs.</div>
+      <div class="note-box">Pick one skill to focus on, or select <strong>All Three</strong> to train pike, pancake, and side split in a single combined session (~80 min). You can always adjust after Phase 1.</div>
       <button class="btn btn-primary mt16" onclick="startAssessment()">Start Assessment →</button>
       <div style="height:32px;"></div>
     </div>
@@ -394,6 +395,44 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
 </nav>
 
 <!-- ═══════════════════════════════════════════
+     PRE-SESSION MODAL
+═══════════════════════════════════════════ -->
+<div class="modal-overlay" id="presession-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Before you start</div>
+
+    <div class="form-group">
+      <label class="form-label">How long do you have today?</label>
+      <div class="option-grid" id="ps-time-opts">
+        <div class="option-pill" data-val="20" onclick="selectPS('time',this)">20 min</div>
+        <div class="option-pill" data-val="30" onclick="selectPS('time',this)">30 min</div>
+        <div class="option-pill" data-val="45" onclick="selectPS('time',this)">45 min</div>
+        <div class="option-pill" data-val="60" onclick="selectPS('time',this)">60 min</div>
+        <div class="option-pill" data-val="999" onclick="selectPS('time',this)">Full session</div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Equipment available today?</label>
+      <div class="option-grid" id="ps-equip-opts">
+        <div class="option-pill" data-val="bodyweight" onclick="selectPS('equip',this)">Bodyweight only</div>
+        <div class="option-pill" data-val="bands" onclick="selectPS('equip',this)">+ Bands</div>
+        <div class="option-pill" data-val="dumbbells" onclick="selectPS('equip',this)">+ Dumbbells / KB</div>
+        <div class="option-pill" data-val="gym" onclick="selectPS('equip',this)">Full gym</div>
+      </div>
+    </div>
+
+    <div id="ps-exercise-preview" style="margin-bottom:16px;"></div>
+
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-secondary" style="flex:1" onclick="closePresession()">Cancel</button>
+      <button class="btn btn-primary" style="flex:2" id="ps-start-btn" onclick="confirmPresession()">Let's go →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
      REST TIMER MODAL
 ═══════════════════════════════════════════ -->
 <div class="modal-overlay" id="timer-modal">
@@ -430,373 +469,220 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
 
 const EXERCISES = {
   calf_stretch: {
-    id: 'calf_stretch',
-    name: 'Standing Calf Stretch',
-    badge: 'weak-link',
-    category: 'dorsiflexion',
-    sets: 3, reps: null, holdSec: 75, tempo: null,
-    unit: 'hold',
+    id: 'calf_stretch', name: 'Standing Calf Stretch',
+    badge: 'weak-link', category: 'dorsiflexion',
+    sets: 3, reps: null, holdSec: 75, tempo: null, unit: 'hold',
+    equipment: 'bodyweight',
+    priority: 1,
+    skills: ['pike','pancake','sidesplit','combined'],
     prescription: '3 angles per leg (neutral, toes in, toes out) · 60–90 sec per angle · Left leg first · Wear shoes',
-    how: [
-      'Hold a wall with one hand for balance',
-      'Place the ball of your foot on a raised edge — heel drops below',
-      'Keep the leg straight',
-      'Actively pull your toes toward your shin — don\'t just let the foot hang',
-      'Hold the bottom position for the full time, pushing deeper on each exhale',
-      'Feet neutral → toes in → toes out. Each angle targets a slightly different part of the calf'
-    ],
-    measureLabel: 'Deepest angle / any difference left vs right',
-    approxMin: 10
+    how: ['Hold a wall with one hand for balance','Place the ball of your foot on a raised edge — heel drops below','Keep the leg straight','Actively pull your toes toward your shin — don\'t just let the foot hang','Hold the bottom position for the full time, pushing deeper on each exhale','Feet neutral → toes in → toes out. Each angle targets a slightly different part of the calf'],
+    measureLabel: 'Deepest angle / any difference left vs right', approxMin: 10
   },
   tibialis_raises: {
-    id: 'tibialis_raises',
-    name: 'Tibialis Anterior Raises',
-    badge: 'weak-link',
-    category: 'dorsiflexion',
-    sets: 2, reps: 12, holdSec: 2, tempo: null,
-    unit: 'reps',
-    prescription: '2 sets × 12–15 reps · Hold 2 sec at top · Band or kettlebell',
-    how: [
-      'Loop a resistance band around a low anchor and around the ball of your foot',
-      'Sit back so the band is under tension, working leg straight',
-      'Pull your foot up toward your shin as far as possible',
-      'Squeeze and hold at the top for 2 seconds',
-      'Lower slowly and repeat',
-      'Alternative: slide a light kettlebell over foot while seated on a bench'
-    ],
-    measureLabel: 'Reps completed / band tension level',
-    approxMin: 5
+    id: 'tibialis_raises', name: 'Tibialis Anterior Raises',
+    badge: 'weak-link', category: 'dorsiflexion',
+    sets: 2, reps: 12, holdSec: 2, tempo: null, unit: 'reps',
+    equipment: 'bands',
+    equipmentAlt: 'bodyweight',
+    priority: 2,
+    skills: ['pike','pancake','sidesplit','combined'],
+    prescription: '2 sets × 12–15 reps · Hold 2 sec at top · Band or kettlebell · Bodyweight toe lifts if no equipment',
+    how: ['Loop a resistance band around a low anchor and around the ball of your foot','Sit back so the band is under tension, working leg straight','Pull your foot up toward your shin as far as possible','Squeeze and hold at the top for 2 seconds','Lower slowly and repeat','No band: sit on chair, lift toes off floor as high as possible, hold 2 sec — same intent'],
+    measureLabel: 'Reps completed / band tension level', approxMin: 5
   },
   jefferson_curl: {
-    id: 'jefferson_curl',
-    name: 'Jefferson Curl',
-    badge: 'loaded-stretch',
-    category: 'pike',
-    sets: 2, reps: 5, holdSec: 3, tempo: '3-3-1-0',
-    unit: 'reps',
-    prescription: '2 sets × 4–5 reps · Tempo 3-3-1-0 · Start 5 kg · Stand on elevated surface',
-    how: [
-      'Stand on a box/bench, weight in hands. Start tall, looking forward',
-      'Tuck the chin first, then roll down vertebra by vertebra — do not hinge at the hip',
-      'Arms hang and drift forward as you descend',
-      'Let the weight slip past your feet. Keep head dropped at the bottom',
-      'At the bottom: contract hip flexors hard — try to pull belly button to thighs',
-      'Hold for tempo, then reverse: extend hips first, unroll spine, head comes up last',
-      'NEVER look up at the bottom position'
-    ],
-    measureLabel: 'Weight used / did weight clear feet? (yes/no/cm)',
-    approxMin: 8
+    id: 'jefferson_curl', name: 'Jefferson Curl',
+    badge: 'loaded-stretch', category: 'pike',
+    sets: 2, reps: 5, holdSec: 3, tempo: '3-3-1-0', unit: 'reps',
+    equipment: 'dumbbells',
+    equipmentAlt: 'bodyweight',
+    priority: 3,
+    skills: ['pike','combined'],
+    prescription: '2 sets × 4–5 reps · Tempo 3-3-1-0 · Start 5 kg · Bodyweight if no weights — longer holds',
+    how: ['Stand on a box/bench, weight in hands. Start tall, looking forward','Tuck the chin first, then roll down vertebra by vertebra — do not hinge at the hip','Arms hang and drift forward as you descend','Let the weight slip past your feet. Keep head dropped at the bottom','At the bottom: contract hip flexors hard — try to pull belly button to thighs','Hold for tempo, then reverse: extend hips first, unroll spine, head comes up last','NEVER look up at the bottom position'],
+    measureLabel: 'Weight used / did weight clear feet? (yes/no/cm)', approxMin: 8
   },
   pike_good_morning: {
-    id: 'pike_good_morning',
-    name: 'Standing Pike Good Morning',
-    badge: 'loaded-stretch',
-    category: 'pike',
-    sets: 3, reps: 6, holdSec: 3, tempo: '3-3-1-0',
-    unit: 'reps',
-    prescription: '2–3 sets × 6 reps · Tempo 3-3-1-0 · 5–8 kg overhead · Stack books as target',
-    how: [
-      'Stand feet together, hold dumbbell (5–8 kg) with both hands overhead or on upper back',
-      'Stack books in front as a head-height target to aim for',
-      'Hinge at hips — push hips back slightly as torso goes forward',
-      'Keep lower back arched as long as possible',
-      'When arch is lost: let spine round and drop the head — drive forward, not just down',
-      'At bottom: contract hip flexors hard to pull deeper. Hold for tempo',
-      'Reverse back to top'
-    ],
-    measureLabel: 'Stack height touched (books / cm)',
-    approxMin: 10
+    id: 'pike_good_morning', name: 'Standing Pike Good Morning',
+    badge: 'loaded-stretch', category: 'pike',
+    sets: 3, reps: 6, holdSec: 3, tempo: '3-3-1-0', unit: 'reps',
+    equipment: 'dumbbells',
+    equipmentAlt: 'bodyweight',
+    priority: 4,
+    skills: ['pike','combined'],
+    prescription: '2–3 sets × 6 reps · Tempo 3-3-1-0 · 5–8 kg overhead · Bodyweight if no weights',
+    how: ['Stand feet together, hold dumbbell (5–8 kg) with both hands overhead or on upper back','Stack books in front as a head-height target to aim for','Hinge at hips — push hips back slightly as torso goes forward','Keep lower back arched as long as possible','When arch is lost: let spine round and drop the head — drive forward, not just down','At bottom: contract hip flexors hard to pull deeper. Hold for tempo','Reverse back to top'],
+    measureLabel: 'Stack height touched (books / cm)', approxMin: 10
   },
   pike_lift_cracr: {
-    id: 'pike_lift_cracr',
-    name: 'Leg Elevated Pike Lift — CRACR',
-    badge: 'active',
-    category: 'pike',
-    sets: 2, reps: 4, holdSec: 4, tempo: null,
-    unit: 'reps',
+    id: 'pike_lift_cracr', name: 'Leg Elevated Pike Lift — CRACR',
+    badge: 'active', category: 'pike',
+    sets: 2, reps: 4, holdSec: 4, tempo: null, unit: 'reps',
+    equipment: 'bodyweight',
+    priority: 6,
+    skills: ['pike','combined'],
     prescription: '2–3 sets × 4–5 reps per side · Left first · Match right to left reps only',
-    how: [
-      'Elevate one foot on a surface you can just barely lift off from',
-      '1 rep: lean forward over leg → drive heel DOWN into surface at 80% effort for 3–5 sec',
-      'Stand back upright (relax). Lock standing leg quad, squeeze opposite glute',
-      'Lift elevated leg 1–2 inches off the surface and hold 3–5 sec',
-      'Lower back to surface. That is 1 rep',
-      'Expect cramping — drop leg briefly to release, then lift again',
-      'Progress: raise surface height session by session toward horizontal'
-    ],
-    measureLabel: 'Surface height / can lift cleanly (yes/no)',
-    approxMin: 10
+    how: ['Elevate one foot on a surface you can just barely lift off from','1 rep: lean forward over leg → drive heel DOWN into surface at 80% effort for 3–5 sec','Stand back upright (relax). Lock standing leg quad, squeeze opposite glute','Lift elevated leg 1–2 inches off the surface and hold 3–5 sec','Lower back to surface. That is 1 rep','Expect cramping — drop leg briefly to release, then lift again','Progress: raise surface height session by session toward horizontal'],
+    measureLabel: 'Surface height / can lift cleanly (yes/no)', approxMin: 10
   },
   pike_active_lifts: {
-    id: 'pike_active_lifts',
-    name: 'Seated Pike Active Lifts',
-    badge: 'active',
-    category: 'pike',
-    sets: 2, reps: 6, holdSec: 2, tempo: '1-2-1-0',
-    unit: 'reps',
+    id: 'pike_active_lifts', name: 'Seated Pike Active Lifts',
+    badge: 'active', category: 'pike',
+    sets: 2, reps: 6, holdSec: 2, tempo: '1-2-1-0', unit: 'reps',
+    equipment: 'bodyweight',
+    priority: 7,
+    skills: ['pike','combined'],
     prescription: '2 sets × 6 reps · Tempo 1-2-1-0 · 30 sec total lift time per set',
-    how: [
-      'Sit on floor, legs straight together in front',
-      'Place hands either side, fingers forward — start close to hips',
-      'Press firmly into floor, lean torso slightly forward',
-      'Squeeze hip flexors and quads to lift both legs off the floor',
-      'Goal is forward lean of torso — not height of legs',
-      'Progress: move hands further toward knees / past knees each session'
-    ],
-    measureLabel: 'Hand position along leg (e.g. at knee / 2 fingers past)',
-    approxMin: 6
+    how: ['Sit on floor, legs straight together in front','Place hands either side, fingers forward — start close to hips','Press firmly into floor, lean torso slightly forward','Squeeze hip flexors and quads to lift both legs off the floor','Goal is forward lean of torso — not height of legs','Progress: move hands further toward knees / past knees each session'],
+    measureLabel: 'Hand position along leg (e.g. at knee / 2 fingers past)', approxMin: 6
   },
   passive_pike_hold: {
-    id: 'passive_pike_hold',
-    name: 'Passive Pike Hold',
-    badge: 'passive',
-    category: 'pike',
-    sets: 2, reps: null, holdSec: 75, tempo: null,
-    unit: 'hold',
+    id: 'passive_pike_hold', name: 'Passive Pike Hold',
+    badge: 'passive', category: 'pike',
+    sets: 2, reps: null, holdSec: 75, tempo: null, unit: 'hold',
+    equipment: 'bodyweight',
+    priority: 9,
+    skills: ['pike'],
     prescription: '2 × 60–90 sec · Seated, reach forward as far as possible · Deepen on each exhale',
-    how: [
-      'Sit with legs straight together, reach forward as far as possible',
-      'Let the position relax and deepen on every exhale',
-      'No bouncing or forcing — this is pure relaxation into the range',
-      'This is where you consolidate the range opened during training'
-    ],
-    measureLabel: 'What you reached (shins / ankles / toes / floor)',
-    approxMin: 5
+    how: ['Sit with legs straight together, reach forward as far as possible','Let the position relax and deepen on every exhale','No bouncing or forcing — this is pure relaxation into the range','This is where you consolidate the range opened during training'],
+    measureLabel: 'What you reached (shins / ankles / toes / floor)', approxMin: 5
   },
   donkey_calf: {
-    id: 'donkey_calf',
-    name: 'Donkey Calf Stretch',
-    badge: 'weak-link',
-    category: 'dorsiflexion',
-    sets: 3, reps: null, holdSec: 60, tempo: null,
-    unit: 'hold',
+    id: 'donkey_calf', name: 'Donkey Calf Stretch',
+    badge: 'weak-link', category: 'dorsiflexion',
+    sets: 3, reps: null, holdSec: 60, tempo: null, unit: 'hold',
+    equipment: 'bodyweight',
+    priority: 1,
+    skills: ['sidesplit','combined'],
     prescription: '60 sec × 3 angles per leg · Bent-over position · Shoes on',
-    how: [
-      'Bend forward with hands on a support (bench, wall, table)',
-      'Elevate the ball of your working foot on a platform',
-      'Bend non-working knee to get it out of the way',
-      'Allow body weight to press onto the working calf',
-      'Actively dorsiflex the foot — pull toes toward shin',
-      'Try all 3 foot angles: neutral, toes in, toes out'
-    ],
-    measureLabel: 'Depth / tightest angle today',
-    approxMin: 8
+    how: ['Bend forward with hands on a support (bench, wall, table)','Elevate the ball of your working foot on a platform','Bend non-working knee to get it out of the way','Allow body weight to press onto the working calf','Actively dorsiflex the foot — pull toes toward shin','Try all 3 foot angles: neutral, toes in, toes out'],
+    measureLabel: 'Depth / tightest angle today', approxMin: 8
   },
   horse_stance_slides: {
-    id: 'horse_stance_slides',
-    name: 'Horse Stance Slides',
-    badge: 'technique',
-    category: 'sidesplit',
-    sets: 1, reps: 10, holdSec: null, tempo: null,
-    unit: 'reps',
+    id: 'horse_stance_slides', name: 'Horse Stance Slides',
+    badge: 'technique', category: 'sidesplit',
+    sets: 1, reps: 10, holdSec: null, tempo: null, unit: 'reps',
+    equipment: 'bodyweight',
+    priority: 2,
+    skills: ['sidesplit','combined'],
     prescription: '1 set × 8–10 slow reps · Supported on box/chair · Alignment only — not depth',
-    how: [
-      'Hold a box or chair with straight arms for support',
-      'Set up in horse stance: feet wider than shoulder width, toes out, knees pushing out',
-      'Sit hips back, arch lower back, chest high, looking forward',
-      'Slowly slide feet out into a supported side split, maintaining the arched back',
-      'Hold briefly at bottom, step back in and reset',
-      'STOP doing this once alignment feels automatic (2–4 weeks)'
-    ],
-    measureLabel: 'Alignment felt natural (yes/no) / any issues',
-    approxMin: 5
+    how: ['Hold a box or chair with straight arms for support','Set up in horse stance: feet wider than shoulder width, toes out, knees pushing out','Sit hips back, arch lower back, chest high, looking forward','Slowly slide feet out into a supported side split, maintaining the arched back','Hold briefly at bottom, step back in and reset','STOP doing this once alignment feels automatic (2–4 weeks)'],
+    measureLabel: 'Alignment felt natural (yes/no) / any issues', approxMin: 5
   },
   tailors_pose: {
-    id: 'tailors_pose',
-    name: "Tailor's Pose",
-    badge: 'loaded-stretch',
-    category: 'sidesplit',
-    sets: 3, reps: 8, holdSec: 3, tempo: '2-3-1-0',
-    unit: 'reps',
-    prescription: '2–3 sets × 8 reps · Tempo 2-3-1-0 · 4–10 kg per knee · Back against wall',
-    how: [
-      'Sit with your back flat against a wall',
-      'Pull both feet in toward groin as close as possible, heels touching',
-      'Place a dumbbell or kettlebell on each knee (on the knee itself)',
-      'Test unloaded range first — how far knees drop without hands',
-      'Select weight that takes you slightly past unloaded range only',
-      'Perform reps with tempo — focus on the bottom position',
-      'Final rep: hold 10–15 sec, try to relax the inner thigh',
-      'Note if left knee drops less than right — that is your imbalance'
-    ],
-    measureLabel: 'Weight used / left knee vs right knee drop difference',
-    approxMin: 10
+    id: 'tailors_pose', name: "Tailor's Pose",
+    badge: 'loaded-stretch', category: 'sidesplit',
+    sets: 3, reps: 8, holdSec: 3, tempo: '2-3-1-0', unit: 'reps',
+    equipment: 'dumbbells',
+    equipmentAlt: 'bodyweight',
+    priority: 3,
+    skills: ['sidesplit','combined'],
+    prescription: '2–3 sets × 8 reps · Tempo 2-3-1-0 · 4–10 kg per knee · Bodyweight if no weights — longer hold',
+    how: ['Sit with your back flat against a wall','Pull both feet in toward groin as close as possible, heels touching','Place a dumbbell or kettlebell on each knee (on the knee itself)','Test unloaded range first — how far knees drop without hands','Select weight that takes you slightly past unloaded range only','Perform reps with tempo — focus on the bottom position','Final rep: hold 10–15 sec, try to relax the inner thigh','Note if left knee drops less than right — that is your imbalance'],
+    measureLabel: 'Weight used / left knee vs right knee drop difference', approxMin: 10
   },
   horse_stance_squats: {
-    id: 'horse_stance_squats',
-    name: 'Horse Stance Squats',
-    badge: 'loaded-stretch',
-    category: 'sidesplit',
-    sets: 3, reps: 8, holdSec: 3, tempo: '2-3-1-0',
-    unit: 'reps',
-    prescription: '3 sets × 8 reps · Tempo 2-3-1-0 · 4–8 kg goblet hold · 5-step stance to start',
-    how: [
-      'Hold weight at chest height (goblet). Start at 5-step stance',
-      'Triangle position is mandatory: hips back behind feet, lower back arched, chest high, knees out, looking forward',
-      'Squat down maintaining this position throughout',
-      'At bottom: squeeze glutes hard to pull legs apart — cramping level of effort',
-      'Hold bottom for tempo. Squeeze adductors to lift back to top',
-      '5-step counting: feet together → toes out → heels out → toes out → heels out → toes to natural turnout',
-      'Only widen stance when hips consistently break below knee line at current width'
-    ],
-    measureLabel: 'Step stance / hips below knees? (yes/no) / weight used',
-    approxMin: 12
+    id: 'horse_stance_squats', name: 'Horse Stance Squats',
+    badge: 'loaded-stretch', category: 'sidesplit',
+    sets: 3, reps: 8, holdSec: 3, tempo: '2-3-1-0', unit: 'reps',
+    equipment: 'dumbbells',
+    equipmentAlt: 'bodyweight',
+    priority: 4,
+    skills: ['sidesplit','pancake','combined'],
+    prescription: '3 sets × 8 reps · Tempo 2-3-1-0 · 4–8 kg goblet hold · Bodyweight if no weights',
+    how: ['Hold weight at chest height (goblet). Start at 5-step stance','Triangle position is mandatory: hips back behind feet, lower back arched, chest high, knees out, looking forward','Squat down maintaining this position throughout','At bottom: squeeze glutes hard to pull legs apart — cramping level of effort','Hold bottom for tempo. Squeeze adductors to lift back to top','5-step counting: feet together → toes out → heels out → toes out → heels out → toes to natural turnout','Only widen stance when hips consistently break below knee line at current width'],
+    measureLabel: 'Step stance / hips below knees? (yes/no) / weight used', approxMin: 12
   },
   adductor_flyes: {
-    id: 'adductor_flyes',
-    name: 'Adductor Flyes',
-    badge: 'active',
-    category: 'sidesplit',
-    sets: 2, reps: 8, holdSec: 3, tempo: '2-3-1-0',
-    unit: 'reps',
+    id: 'adductor_flyes', name: 'Adductor Flyes',
+    badge: 'active', category: 'sidesplit',
+    sets: 2, reps: 8, holdSec: 3, tempo: '2-3-1-0', unit: 'reps',
+    equipment: 'bodyweight',
+    priority: 7,
+    skills: ['sidesplit','combined'],
     prescription: '2 sets × 8 reps · Tempo 2-3-1-0 · Bodyweight only to start',
-    how: [
-      'Lie on your back with legs straight up above you',
-      'Actively open the legs out to the sides into a split',
-      'As you open: actively pull legs apart and down using glutes — do not just let them fall',
-      'Rest in the opened bottom position between reps — not at the top',
-      'The intention of actively pulling apart is the key — even with little visible movement'
-    ],
-    measureLabel: 'Leg opening angle / any left/right difference',
-    approxMin: 6
+    how: ['Lie on your back with legs straight up above you','Actively open the legs out to the sides into a split','As you open: actively pull legs apart and down using glutes — do not just let them fall','Rest in the opened bottom position between reps — not at the top','The intention of actively pulling apart is the key — even with little visible movement'],
+    measureLabel: 'Leg opening angle / any left/right difference', approxMin: 6
   },
   isometric_split: {
-    id: 'isometric_split',
-    name: 'Isometric Side Split Hold',
-    badge: 'active',
-    category: 'sidesplit',
-    sets: 2, reps: null, holdSec: 50, tempo: null,
-    unit: 'hold',
+    id: 'isometric_split', name: 'Isometric Side Split Hold',
+    badge: 'active', category: 'sidesplit',
+    sets: 2, reps: null, holdSec: 50, tempo: null, unit: 'hold',
+    equipment: 'bodyweight',
+    priority: 8,
+    skills: ['sidesplit','combined'],
     prescription: '2 sets × 45–60 sec · Triangle position · Tape foot positions on floor · 2 min rest',
-    how: [
-      'Tape foot positions on floor so they are identical each session',
-      'Set a width you can hold with FULL triangle alignment for the full time',
-      'Triangle: hips back, arched back, chest high, knees tracking over toes',
-      'Hold position against gravity — hands off floor as soon as possible',
-      'Shaking is normal — push through unless there is sharp pain',
-      'Progress: hold 60 sec hands-free → widen stance → repeat'
-    ],
-    measureLabel: 'Distance between feet (cm) / held hands-free? (yes/no)',
-    approxMin: 8
+    how: ['Tape foot positions on floor so they are identical each session','Set a width you can hold with FULL triangle alignment for the full time','Triangle: hips back, arched back, chest high, knees tracking over toes','Hold position against gravity — hands off floor as soon as possible','Shaking is normal — push through unless there is sharp pain','Progress: hold 60 sec hands-free → widen stance → repeat'],
+    measureLabel: 'Distance between feet (cm) / held hands-free? (yes/no)', approxMin: 8
   },
   foot_rolling: {
-    id: 'foot_rolling',
-    name: 'Rolling Out The Feet',
-    badge: 'technique',
-    category: 'pancake',
-    sets: 1, reps: null, holdSec: 150, tempo: null,
-    unit: 'hold',
+    id: 'foot_rolling', name: 'Rolling Out The Feet',
+    badge: 'technique', category: 'pancake',
+    sets: 1, reps: null, holdSec: 150, tempo: null, unit: 'hold',
+    equipment: 'bodyweight',
+    priority: 1,
+    skills: ['pancake','combined'],
     prescription: '2–3 min per foot · Lacrosse ball or dense ball · Test pike before and after',
-    how: [
-      'Use a lacrosse ball, golf ball, or dense massage ball — must be firm',
-      'Place foot on top and slowly distribute body weight onto the ball',
-      'Move foot around applying pressure to different spots',
-      'Pause on spots with high tension for several seconds',
-      'Test your pike depth before doing this and retest after',
-      'If it improves depth, keep it every session'
-    ],
-    measureLabel: 'Did it change pike/pancake depth? (yes/no/slightly)',
-    approxMin: 6
+    how: ['Use a lacrosse ball, golf ball, or dense massage ball — must be firm','Place foot on top and slowly distribute body weight onto the ball','Move foot around applying pressure to different spots','Pause on spots with high tension for several seconds','Test your pike depth before doing this and retest after','If it improves depth, keep it every session'],
+    measureLabel: 'Did it change pike/pancake depth? (yes/no/slightly)', approxMin: 6
   },
   pancake_hang_pir: {
-    id: 'pancake_hang_pir',
-    name: 'Standing Pancake Hang — Contract Relax',
-    badge: 'loaded-stretch',
-    category: 'pancake',
-    sets: 3, reps: 4, holdSec: 5, tempo: null,
-    unit: 'cycles',
+    id: 'pancake_hang_pir', name: 'Standing Pancake Hang — Contract Relax',
+    badge: 'loaded-stretch', category: 'pancake',
+    sets: 3, reps: 4, holdSec: 5, tempo: null, unit: 'cycles',
+    equipment: 'bodyweight',
+    priority: 3,
+    skills: ['pancake','combined'],
     prescription: '2–3 sets × 3–5 cycles · Bodyweight or 2–4 kg · Place marker just out of reach',
-    how: [
-      'Stand straddled on two elevated surfaces with a gap between feet',
-      'Feet slightly turned out, legs straight, hang in the straddle position',
-      'Place a marker (book, block) just barely out of reach at floor level',
-      'CONTRACT (5 sec): pull yourself toward floor using hip flexors at ~80% effort. Very little moves visibly — the effort is internal',
-      'RELAX (5 sec): let go completely and hang passively — range slightly deepens',
-      'That is 1 cycle. Repeat 3–5 cycles per set',
-      'You should just miss the marker at start and touch it by the last cycle'
-    ],
-    measureLabel: 'Did you reach the marker by last cycle? (yes/no)',
-    approxMin: 10
+    how: ['Stand straddled on two elevated surfaces with a gap between feet','Feet slightly turned out, legs straight, hang in the straddle position','Place a marker (book, block) just barely out of reach at floor level','CONTRACT (5 sec): pull yourself toward floor using hip flexors at ~80% effort. Very little moves visibly — the effort is internal','RELAX (5 sec): let go completely and hang passively — range slightly deepens','That is 1 cycle. Repeat 3–5 cycles per set','You should just miss the marker at start and touch it by the last cycle'],
+    measureLabel: 'Did you reach the marker by last cycle? (yes/no)', approxMin: 10
   },
   straddle_jefferson: {
-    id: 'straddle_jefferson',
-    name: 'Straddle Jefferson Curl',
-    badge: 'loaded-stretch',
-    category: 'pancake',
-    sets: 3, reps: 5, holdSec: 3, tempo: '3-3-1-0',
-    unit: 'reps',
-    prescription: '2–3 sets × 4–5 reps · Tempo 3-3-1-0 · 8–10 kg · Feet wider than shoulder width',
-    how: [
-      'Stand elevated, feet outside shoulder width with slight turn-out',
-      'Same articulation as Jefferson curl — chin tucks, roll down vertebra by vertebra',
-      'Arms hang and stay below shoulders as you descend',
-      'Let weight slip past your feet. Keep head dropped at bottom',
-      'Contract hip flexors hard at bottom — squeeze thigh to abdomen gap',
-      'Reverse: extend hips first, then roll spine back up'
-    ],
-    measureLabel: 'Weight used / did weight clear feet?',
-    approxMin: 9
+    id: 'straddle_jefferson', name: 'Straddle Jefferson Curl',
+    badge: 'loaded-stretch', category: 'pancake',
+    sets: 3, reps: 5, holdSec: 3, tempo: '3-3-1-0', unit: 'reps',
+    equipment: 'dumbbells',
+    equipmentAlt: 'bodyweight',
+    priority: 4,
+    skills: ['pancake','combined'],
+    prescription: '2–3 sets × 4–5 reps · Tempo 3-3-1-0 · 8–10 kg · Bodyweight if no weights — slower tempo',
+    how: ['Stand elevated, feet outside shoulder width with slight turn-out','Same articulation as Jefferson curl — chin tucks, roll down vertebra by vertebra','Arms hang and stay below shoulders as you descend','Let weight slip past your feet. Keep head dropped at bottom','Contract hip flexors hard at bottom — squeeze thigh to abdomen gap','Reverse: extend hips first, then roll spine back up'],
+    measureLabel: 'Weight used / did weight clear feet?', approxMin: 9
   },
   pancake_good_morning: {
-    id: 'pancake_good_morning',
-    name: 'Pancake Good Morning — Round Back',
-    badge: 'loaded-stretch',
-    category: 'pancake',
-    sets: 3, reps: 6, holdSec: 3, tempo: '3-3-1-0',
-    unit: 'reps',
-    prescription: '2–3 sets × 6 reps · Tempo 3-3-1-0 · 6–10 kg · Stack books as head target',
-    how: [
-      'Sit on floor, legs straddled at moderate width (slightly narrower than max)',
-      'Hold a weight plate or dumbbell (6–10 kg) at chest height',
-      'Stack books in front as a head-height target',
-      'Hinge forward at hips with slight arch (straight back phase)',
-      'When arch is lost: let spine flex, drop head — drive FORWARD not just down',
-      'At bottom: contract hip flexors to pull deeper. Hold for tempo',
-      'Extend spine back to straight, then lift to upright',
-      'Touch point order: forehead → nose → chin → chest → belly'
-    ],
-    measureLabel: 'Touch point reached (forehead/nose/chin/chest) / stack height',
-    approxMin: 10
+    id: 'pancake_good_morning', name: 'Pancake Good Morning — Round Back',
+    badge: 'loaded-stretch', category: 'pancake',
+    sets: 3, reps: 6, holdSec: 3, tempo: '3-3-1-0', unit: 'reps',
+    equipment: 'dumbbells',
+    equipmentAlt: 'bodyweight',
+    priority: 5,
+    skills: ['pancake','combined'],
+    prescription: '2–3 sets × 6 reps · Tempo 3-3-1-0 · 6–10 kg · Bodyweight if no weights',
+    how: ['Sit on floor, legs straddled at moderate width (slightly narrower than max)','Hold a weight plate or dumbbell (6–10 kg) at chest height','Stack books in front as a head-height target','Hinge forward at hips with slight arch (straight back phase)','When arch is lost: let spine flex, drop head — drive FORWARD not just down','At bottom: contract hip flexors to pull deeper. Hold for tempo','Extend spine back to straight, then lift to upright','Touch point order: forehead → nose → chin → chest → belly'],
+    measureLabel: 'Touch point reached (forehead/nose/chin/chest) / stack height', approxMin: 10
   },
   pancake_active_lifts: {
-    id: 'pancake_active_lifts',
-    name: 'Seated Pancake Active Lifts — Single Leg',
-    badge: 'active',
-    category: 'pancake',
-    sets: 2, reps: 5, holdSec: 2, tempo: '1-2-1-0',
-    unit: 'reps',
+    id: 'pancake_active_lifts', name: 'Seated Pancake Active Lifts — Single Leg',
+    badge: 'active', category: 'pancake',
+    sets: 2, reps: 5, holdSec: 2, tempo: '1-2-1-0', unit: 'reps',
+    equipment: 'bodyweight',
+    priority: 7,
+    skills: ['pancake','combined'],
     prescription: '2 sets × 5 reps per side · Left first · 30 sec total lift time per set',
-    how: [
-      'Sit on floor, legs straddled. Hands placed between legs on inside',
-      'Start with hands close to hips (easier). Progress hands outward toward knees',
-      'Press into floor firmly and lean torso forward',
-      'Squeeze hip flexors and quads to lift one leg',
-      'Goal is forward lean — not height of leg',
-      'Left side first, match reps exactly on right',
-      'Expect cramping — drop and re-lift if severe'
-    ],
-    measureLabel: 'Hand position (fingers from knee / past knee)',
-    approxMin: 8
+    how: ['Sit on floor, legs straddled. Hands placed between legs on inside','Start with hands close to hips (easier). Progress hands outward toward knees','Press into floor firmly and lean torso forward','Squeeze hip flexors and quads to lift one leg','Goal is forward lean — not height of leg','Left side first, match reps exactly on right','Expect cramping — drop and re-lift if severe'],
+    measureLabel: 'Hand position (fingers from knee / past knee)', approxMin: 8
   },
   block_crush: {
-    id: 'block_crush',
-    name: 'Block Crush — Pancake',
-    badge: 'technique',
-    category: 'pancake',
-    sets: 2, reps: null, holdSec: 15, tempo: null,
-    unit: 'hold',
+    id: 'block_crush', name: 'Block Crush — Pancake',
+    badge: 'technique', category: 'pancake',
+    sets: 2, reps: null, holdSec: 15, tempo: null, unit: 'hold',
+    equipment: 'bodyweight',
+    priority: 9,
+    skills: ['pancake'],
     prescription: '1–2 sets × 10–20 sec per side · Yoga block between thigh and abdomen',
-    how: [
-      'Elevate one leg to roughly hip height (chair, box, or table)',
-      'Let the hip open to the side — like the pancake position',
-      'Place a yoga block between your thigh and abdomen',
-      'Find a position slightly before your end range where you can generate force',
-      'Drive from both sides simultaneously: torso down AND leg up — try to crush the block',
-      'Ramp intensity from 20% up to ~80–90% over a few seconds',
-      'Hold for prescribed time. This wakes up the muscles, not stretch'
-    ],
-    measureLabel: 'Left/right done (yes/no)',
-    approxMin: 4
+    how: ['Elevate one leg to roughly hip height (chair, box, or table)','Let the hip open to the side — like the pancake position','Place a yoga block between your thigh and abdomen','Find a position slightly before your end range where you can generate force','Drive from both sides simultaneously: torso down AND leg up — try to crush the block','Ramp intensity from 20% up to ~80–90% over a few seconds','Hold for prescribed time. This wakes up the muscles, not stretch'],
+    measureLabel: 'Left/right done (yes/no)', approxMin: 4
   }
 };
 
@@ -806,58 +692,40 @@ const EXERCISES = {
 
 const PROGRAMS = {
   pike: {
-    skill: 'pike',
-    skillLabel: 'Pike',
-    phase: 1,
-    sessions: [
-      {
-        id: 'A', label: 'Session A', focus: 'Pike',
-        exercises: ['calf_stretch','tibialis_raises','jefferson_curl','pike_good_morning','pike_lift_cracr','pike_active_lifts','passive_pike_hold'],
-        approxMin: 58
-      }
-    ],
-    exitCriteria: [
-      'Standing pike good morning: head reaches floor level',
-      'Seated pike active lifts: hands past knees cleanly',
-      'Passive pike hold: reaching toes or beyond',
-      'Dorsiflexion: heels stay down in ATG squat'
-    ]
+    skill: 'pike', skillLabel: 'Pike', phase: 1,
+    sessions: [{
+      id: 'A', label: 'Session A', focus: 'Pike',
+      exercises: ['calf_stretch','tibialis_raises','jefferson_curl','pike_good_morning','pike_lift_cracr','pike_active_lifts','passive_pike_hold'],
+      approxMin: 58
+    }],
+    exitCriteria: ['Standing pike good morning: head reaches floor level','Seated pike active lifts: hands past knees cleanly','Passive pike hold: reaching toes or beyond','Dorsiflexion: heels stay down in ATG squat']
   },
   pancake: {
-    skill: 'pancake',
-    skillLabel: 'Pancake',
-    phase: 1,
-    sessions: [
-      {
-        id: 'A', label: 'Session A', focus: 'Pancake',
-        exercises: ['foot_rolling','calf_stretch','tibialis_raises','pancake_hang_pir','straddle_jefferson','pancake_good_morning','pancake_active_lifts','block_crush'],
-        approxMin: 62
-      }
-    ],
-    exitCriteria: [
-      'Standing pancake hang: hip flexors pulling actively, not just hanging',
-      'Pancake good morning: chin or chest making contact with floor',
-      'Seated pancake: no longer falling backward — anterior pelvic tilt maintained',
-      'Dorsiflexion: heels stay down in ATG squat'
-    ]
+    skill: 'pancake', skillLabel: 'Pancake', phase: 1,
+    sessions: [{
+      id: 'A', label: 'Session A', focus: 'Pancake',
+      exercises: ['foot_rolling','calf_stretch','tibialis_raises','pancake_hang_pir','straddle_jefferson','pancake_good_morning','pancake_active_lifts','block_crush'],
+      approxMin: 62
+    }],
+    exitCriteria: ['Standing pancake hang: hip flexors pulling actively, not just hanging','Pancake good morning: chin or chest making contact with floor','Seated pancake: no longer falling backward — anterior pelvic tilt maintained','Dorsiflexion: heels stay down in ATG squat']
   },
   sidesplit: {
-    skill: 'sidesplit',
-    skillLabel: 'Side Split',
-    phase: 1,
-    sessions: [
-      {
-        id: 'A', label: 'Session A', focus: 'Side Split',
-        exercises: ['donkey_calf','horse_stance_slides','tailors_pose','horse_stance_squats','adductor_flyes','isometric_split'],
-        approxMin: 55
-      }
-    ],
-    exitCriteria: [
-      'Horse stance squats: 7-step width, hips below knees consistently',
-      'Isometric side split: 60 sec hold hands-free',
-      'Tailor\'s pose: knees touching floor or close',
-      'Dorsiflexion: heels stay down in ATG squat'
-    ]
+    skill: 'sidesplit', skillLabel: 'Side Split', phase: 1,
+    sessions: [{
+      id: 'A', label: 'Session A', focus: 'Side Split',
+      exercises: ['donkey_calf','horse_stance_slides','tailors_pose','horse_stance_squats','adductor_flyes','isometric_split'],
+      approxMin: 55
+    }],
+    exitCriteria: ['Horse stance squats: 7-step width, hips below knees consistently','Isometric side split: 60 sec hold hands-free','Tailor\'s pose: knees touching floor or close','Dorsiflexion: heels stay down in ATG squat']
+  },
+  combined: {
+    skill: 'combined', skillLabel: 'All Three Skills', phase: 1,
+    sessions: [{
+      id: 'A', label: 'Session A', focus: 'Pike + Pancake + Side Split',
+      exercises: ['calf_stretch','tibialis_raises','horse_stance_slides','tailors_pose','horse_stance_squats','straddle_jefferson','pancake_good_morning','pancake_hang_pir','pike_lift_cracr','adductor_flyes','isometric_split'],
+      approxMin: 82
+    }],
+    exitCriteria: ['Standing pancake hang: hip flexors pulling actively','Horse stance squats: 7-step width, hips below knees consistently','Isometric side split: 60 sec hold hands-free','Seated pancake: no longer falling backward','Dorsiflexion: heels stay down in ATG squat','Pike active lifts: hands past knees cleanly']
   }
 };
 
@@ -1008,7 +876,10 @@ function startAssessment() {
   state.user = { name, skill: selectedSkill, assessAnswers: {} };
   assessAnswers = {};
   assessStep = 0;
-  assessQuestions = [...(ASSESS_QUESTIONS[selectedSkill] || []), ...COMMON_QUESTIONS];
+  const skillQuestions = selectedSkill === 'combined'
+    ? [...(ASSESS_QUESTIONS['pike'] || []), ...(ASSESS_QUESTIONS['sidesplit'] || []), ...(ASSESS_QUESTIONS['pancake'] || [])]
+    : (ASSESS_QUESTIONS[selectedSkill] || []);
+  assessQuestions = [...skillQuestions, ...COMMON_QUESTIONS];
   renderAssessStep();
   showScreen('assess');
 }
@@ -1217,7 +1088,7 @@ function renderHome() {
         <div class="font-mono font-xs text-dim">~${nextSession.approxMin} min</div>
       </div>
       <div class="card-sub">${nextSession.exercises.length} exercises</div>
-      <button class="btn btn-primary mt12" onclick="startSession('${nextSession.id}')">Start Session →</button>
+      <button class="btn btn-primary mt12" onclick="openPresession('${nextSession.id}')">Start Session →</button>
     </div>`;
 
   // Phase progress
@@ -1288,34 +1159,121 @@ function getNextSession() {
 }
 
 // ═══════════════════════════════════════════════════════
+// PRE-SESSION MODAL
+// ═══════════════════════════════════════════════════════
+
+let psState = { time: null, equip: null, sessionId: null };
+
+function openPresession(sessionId) {
+  psState = { time: null, equip: null, sessionId };
+  // Reset selections
+  document.querySelectorAll('#ps-time-opts .option-pill, #ps-equip-opts .option-pill').forEach(p => p.classList.remove('selected'));
+  document.getElementById('ps-exercise-preview').innerHTML = '';
+  document.getElementById('presession-modal').classList.add('active');
+}
+
+function closePresession() {
+  document.getElementById('presession-modal').classList.remove('active');
+}
+
+function selectPS(type, el) {
+  const group = type === 'time' ? '#ps-time-opts' : '#ps-equip-opts';
+  document.querySelectorAll(group + ' .option-pill').forEach(p => p.classList.remove('selected'));
+  el.classList.add('selected');
+  if (type === 'time') psState.time = parseInt(el.dataset.val);
+  else psState.equip = el.dataset.val;
+  if (psState.time && psState.equip) updatePresessionPreview();
+}
+
+function equipLevel(equip) {
+  const levels = { bodyweight: 0, bands: 1, dumbbells: 2, gym: 3 };
+  return levels[equip] ?? 0;
+}
+
+function exAvailable(ex, equip) {
+  const level = equipLevel(equip);
+  const exLevel = equipLevel(ex.equipment);
+  const altLevel = ex.equipmentAlt ? equipLevel(ex.equipmentAlt) : exLevel;
+  return level >= exLevel || level >= altLevel;
+}
+
+function filterSession(sessionId, timeBudget, equip) {
+  const session = state.program.sessions.find(s => s.id === sessionId) || state.program.sessions[0];
+  let filtered = session.exercises
+    .map(eid => EXERCISES[eid])
+    .filter(ex => ex && exAvailable(ex, equip))
+    .sort((a, b) => (a.priority || 9) - (b.priority || 9));
+
+  if (timeBudget < 999) {
+    let budget = timeBudget;
+    const selected = [];
+    for (const ex of filtered) {
+      if (budget <= 0) break;
+      selected.push(ex);
+      budget -= ex.approxMin;
+    }
+    filtered = selected;
+  }
+  return filtered;
+}
+
+function updatePresessionPreview() {
+  const filtered = filterSession(psState.sessionId, psState.time, psState.equip);
+  const totalMin = filtered.reduce((t, ex) => t + ex.approxMin, 0);
+  const badgeMap = { 'weak-link': 'badge-teal', 'loaded-stretch': 'badge-purple', 'active': 'badge-coral', 'passive': 'badge-gray', 'technique': 'badge-amber' };
+  let html = `<div class="font-mono font-xs text-dim mb8">${filtered.length} exercises · ~${totalMin} min</div>`;
+  filtered.forEach(ex => {
+    const needsAlt = ex.equipmentAlt && equipLevel(psState.equip) < equipLevel(ex.equipment);
+    html += `<div class="flex gap8" style="padding:5px 0; border-bottom:1px solid var(--border); align-items:center;">
+      <span class="badge ${badgeMap[ex.badge]}" style="flex-shrink:0;">${ex.badge.replace('-',' ')}</span>
+      <span class="font-sm" style="flex:1;">${ex.name}</span>
+      ${needsAlt ? '<span class="font-mono font-xs" style="color:var(--amber);">BW mod</span>' : ''}
+      <span class="font-mono font-xs text-dim">${ex.approxMin}m</span>
+    </div>`;
+  });
+  document.getElementById('ps-exercise-preview').innerHTML = html;
+}
+
+function confirmPresession() {
+  if (!psState.time || !psState.equip) { alert('Please select time and equipment.'); return; }
+  closePresession();
+  const filtered = filterSession(psState.sessionId, psState.time, psState.equip);
+  startSession(psState.sessionId, filtered, psState.equip);
+}
+
+// ═══════════════════════════════════════════════════════
 // ACTIVE SESSION
 // ═══════════════════════════════════════════════════════
 
-function startSession(sessionId) {
+function startSession(sessionId, filteredExercises, equip) {
   const session = state.program.sessions.find(s => s.id === sessionId) || state.program.sessions[0];
+  const exercises = filteredExercises || session.exercises.map(eid => EXERCISES[eid]).filter(Boolean);
+  const totalMin = exercises.reduce((t, ex) => t + ex.approxMin, 0);
+
   state.currentSession = {
     sessionType: session.id,
     date: new Date().toISOString(),
+    equipment: equip || 'dumbbells',
     exercises: [],
     notes: ''
   };
 
   document.getElementById('session-title').textContent = `Session ${session.id} — ${session.focus}`;
-  document.getElementById('session-meta').textContent = `${session.exercises.length} exercises · ~${session.approxMin} min`;
+  document.getElementById('session-meta').textContent = `${exercises.length} exercises · ~${totalMin} min`;
 
-  let html = `<div class="warn-box" style="margin-top:4px;">Warm up: complete exercises in order. Rest 60–90 sec between sets.</div>`;
+  let html = `<div class="warn-box" style="margin-top:4px;">Complete exercises in order. Rest 60–90 sec between sets. Tap any exercise to expand cues.</div>`;
 
-  session.exercises.forEach((eid, idx) => {
-    const ex = EXERCISES[eid];
+  exercises.forEach((ex, idx) => {
     if (!ex) return;
     const badgeMap = { 'weak-link': 'badge-teal', 'loaded-stretch': 'badge-purple', 'active': 'badge-coral', 'passive': 'badge-gray', 'technique': 'badge-amber' };
     const labelMap = { 'weak-link': 'weak link', 'loaded-stretch': 'loaded stretch', 'active': 'active', 'passive': 'passive', 'technique': 'technique' };
+    const needsAlt = ex.equipmentAlt && equip && equipLevel(equip) < equipLevel(ex.equipment);
 
     let setsHtml = '';
     for (let s = 1; s <= ex.sets; s++) {
       const repsPlaceholder = ex.unit === 'reps' ? ex.reps : ex.holdSec;
       const repsLabel = ex.unit === 'reps' ? 'reps' : 'sec';
-      const weightField = (ex.badge === 'loaded-stretch' || ex.badge === 'weak-link') ?
+      const weightField = (ex.badge === 'loaded-stretch') && !needsAlt ?
         `<div class="log-field" style="display:flex;align-items:center;gap:4px;"><input class="set-input" type="number" placeholder="0" min="0" id="ex${idx}_s${s}_kg" style="width:52px;"><span class="set-unit">kg</span></div>` : '';
       setsHtml += `
         <div class="set-row">
@@ -1337,20 +1295,26 @@ function startSession(sessionId) {
         </div>`;
     }
 
+    const altNote = needsAlt ? `<div class="warn-box" style="margin-top:8px; font-size:12px;">Bodyweight modification: use longer holds (+2 sec at bottom) to compensate for no added weight.</div>` : '';
+
     html += `
       <div class="ex-card" style="margin-bottom:12px;">
         <div class="ex-header" onclick="toggleEx(this)">
           <div class="ex-num">${idx + 1}</div>
           <div class="ex-info">
             <div class="ex-name">${ex.name}</div>
-            <div class="ex-meta">${ex.prescription.split('·')[0].trim()}</div>
+            <div class="ex-meta">${ex.prescription.split('·')[0].trim()} · ~${ex.approxMin} min</div>
           </div>
           <span class="ex-chevron">▼</span>
         </div>
         <div class="ex-body ${idx === 0 ? 'open' : ''}">
-          <div class="badges" style="margin-top:12px;"><span class="badge ${badgeMap[ex.badge]}">${labelMap[ex.badge]}</span></div>
+          <div class="badges" style="margin-top:12px;">
+            <span class="badge ${badgeMap[ex.badge]}">${labelMap[ex.badge]}</span>
+            ${needsAlt ? '<span class="badge badge-amber">BW modification</span>' : ''}
+          </div>
           <div class="ex-section">Prescription</div>
           <div class="ex-text mb8">${ex.prescription}</div>
+          ${altNote}
           ${tempoHtml}
           <div class="ex-section">Cues</div>
           <ul class="cue-list mb8">${ex.how.map(h => `<li>${h}</li>`).join('')}</ul>
@@ -1375,12 +1339,12 @@ function startSession(sessionId) {
     <div style="height:16px;"></div>`;
 
   document.getElementById('session-content').innerHTML = html;
+
+  // Store filtered exercise list for saving
+  state.currentSession._exerciseList = exercises.map(e => e.id);
   showScreen('session');
 
-  // Set up inline timers
-  session.exercises.forEach((eid, idx) => {
-    setupInlineTimer(idx);
-  });
+  exercises.forEach((ex, idx) => { setupInlineTimer(idx); });
 }
 
 const inlineTimers = {};
@@ -1441,10 +1405,11 @@ function toggleEx(header) {
 
 function endSession() {
   if (!confirm('Finish this session and save your log?')) return;
-  const session = state.program.sessions.find(s => s.id === state.currentSession.sessionType) || state.program.sessions[0];
+  const exerciseIds = state.currentSession._exerciseList || 
+    (state.program.sessions.find(s => s.id === state.currentSession.sessionType) || state.program.sessions[0]).exercises;
   const exercises = [];
 
-  session.exercises.forEach((eid, idx) => {
+  exerciseIds.forEach((eid, idx) => {
     const ex = EXERCISES[eid];
     if (!ex) return;
     const sets = [];
@@ -1461,6 +1426,7 @@ function endSession() {
   const notes = document.getElementById('session-notes')?.value || '';
   state.currentSession.exercises = exercises;
   state.currentSession.notes = notes;
+  delete state.currentSession._exerciseList;
   state.currentSession.id = Date.now().toString();
 
   state.sessions = state.sessions || [];
@@ -1468,7 +1434,6 @@ function endSession() {
   state.currentSession = null;
   saveState();
 
-  // Clear timers
   Object.values(inlineTimers).forEach(t => clearInterval(t.interval));
 
   renderHome();
@@ -1770,7 +1735,7 @@ function showScreen(id) {
 function gotoScreen(id, btn) {
   if (id === 'session-start') {
     const next = getNextSession();
-    startSession(next.id);
+    openPresession(next.id);
     return;
   }
   if (id === 'settings') { renderSettings(); }
