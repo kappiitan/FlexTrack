@@ -360,6 +360,19 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
 </div>
 
 <!-- ═══════════════════════════════════════════
+     SCREEN: SETTINGS
+═══════════════════════════════════════════ -->
+<div id="screen-settings" class="screen">
+  <div class="app-header">
+    <div>
+      <div class="app-logo">Set<span>tings</span></div>
+      <div class="header-sub">APP PREFERENCES</div>
+    </div>
+  </div>
+  <div class="scroll-area px" id="settings-content"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
      BOTTOM NAV (hidden during onboard/assess)
 ═══════════════════════════════════════════ -->
 <nav class="bottom-nav" id="bottom-nav" style="display:none;">
@@ -374,6 +387,9 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
   </button>
   <button class="nav-btn" onclick="gotoScreen('library', this)">
     <span class="nav-icon">≡</span>Library
+  </button>
+  <button class="nav-btn" onclick="gotoScreen('settings', this)">
+    <span class="nav-icon">⚙</span>Settings
   </button>
 </nav>
 
