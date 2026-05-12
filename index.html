@@ -256,10 +256,11 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
           <div class="option-pill" data-val="pike">🔱 Pike</div>
           <div class="option-pill" data-val="pancake">🥞 Pancake</div>
           <div class="option-pill" data-val="sidesplit">⚡ Side Split</div>
-          <div class="option-pill" data-val="combined">🎯 All Three</div>
+          <div class="option-pill" data-val="shoulders">💪 Shoulders</div>
+          <div class="option-pill" data-val="combined">🎯 All Three (Lower)</div>
         </div>
       </div>
-      <div class="note-box">Pick one skill to focus on, or select <strong>All Three</strong> to train pike, pancake, and side split in a single combined session (~80 min). You can always adjust after Phase 1.</div>
+      <div class="note-box">Select one skill to focus on, or <strong>All Three</strong> to train pike, pancake and side split in one combined session (~80 min). <strong>Shoulders</strong> trains on a separate day — not combined with lower body.</div>
       <button class="btn btn-primary mt16" onclick="startAssessment()">Start Assessment →</button>
       <div style="height:32px;"></div>
     </div>
@@ -283,6 +284,14 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
       <button class="btn btn-primary" style="flex:2" id="assess-next-btn" onclick="assessNext()">Next →</button>
     </div>
   </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN: LIMITER SUMMARY
+═══════════════════════════════════════════ -->
+<div id="screen-summary" class="screen">
+  <div class="app-header"><div><div class="app-logo">Your <span>Profile</span></div><div class="header-sub">ASSESSMENT COMPLETE</div></div></div>
+  <div class="scroll-area px" id="summary-content"></div>
 </div>
 
 <!-- ═══════════════════════════════════════════
@@ -429,6 +438,31 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
       <button class="btn btn-secondary" style="flex:1" onclick="closePresession()">Cancel</button>
       <button class="btn btn-primary" style="flex:2" id="ps-start-btn" onclick="confirmPresession()">Let's go →</button>
     </div>
+  </div>
+</div>
+
+<!-- RPE MODAL -->
+<div class="modal-overlay" id="rpe-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">How hard was today?</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6;">1 = very easy · 5 = moderate · 10 = maximum effort</div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:8px 0;" id="rpe-grid"></div>
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button class="btn btn-secondary" style="flex:1" onclick="submitRPE(null)">Skip</button>
+      <button class="btn btn-primary" style="flex:2" onclick="submitRPE(selectedRPE)">Save session</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELOAD MODAL -->
+<div class="modal-overlay" id="deload-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🔄 Consider a deload week</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6;">You have completed 4 weeks of training. This week: reduce weight by 30–40% on all loaded exercises and drop one set. Keep range of motion the same.</div>
+    <div class="note-box">Deloading is not rest — it is active recovery at reduced intensity. You still train every session.</div>
+    <button class="btn btn-primary mt16" onclick="dismissDeload()">Got it</button>
   </div>
 </div>
 
@@ -641,24 +675,24 @@ const EXERCISES = {
   straddle_jefferson: {
     id: 'straddle_jefferson', name: 'Straddle Jefferson Curl',
     badge: 'loaded-stretch', category: 'pancake',
-    sets: 3, reps: 5, holdSec: 3, tempo: '3-3-1-0', unit: 'reps',
+    sets: 3, reps: 5, holdSec: 2, tempo: '6-2-4-0', unit: 'reps',
     equipment: 'dumbbells',
     equipmentAlt: 'bodyweight',
     priority: 4,
     skills: ['pancake','combined'],
-    prescription: '2–3 sets × 4–5 reps · Tempo 3-3-1-0 · 8–10 kg · Bodyweight if no weights — slower tempo',
+    prescription: '2–3 sets × 4–5 reps · Tempo 6-2-4-0 · 8–10 kg · Bodyweight if no weights — longer holds',
     how: ['Stand elevated, feet outside shoulder width with slight turn-out','Same articulation as Jefferson curl — chin tucks, roll down vertebra by vertebra','Arms hang and stay below shoulders as you descend','Let weight slip past your feet. Keep head dropped at bottom','Contract hip flexors hard at bottom — squeeze thigh to abdomen gap','Reverse: extend hips first, then roll spine back up'],
     measureLabel: 'Weight used / did weight clear feet?', approxMin: 9
   },
   pancake_good_morning: {
     id: 'pancake_good_morning', name: 'Pancake Good Morning — Round Back',
     badge: 'loaded-stretch', category: 'pancake',
-    sets: 3, reps: 6, holdSec: 3, tempo: '3-3-1-0', unit: 'reps',
+    sets: 3, reps: 6, holdSec: 2, tempo: '3-2-2-0', unit: 'reps',
     equipment: 'dumbbells',
     equipmentAlt: 'bodyweight',
     priority: 5,
     skills: ['pancake','combined'],
-    prescription: '2–3 sets × 6 reps · Tempo 3-3-1-0 · 6–10 kg · Bodyweight if no weights',
+    prescription: '2–3 sets × 6 reps · Tempo 3-2-2-0 · 6–10 kg · Bodyweight if no weights',
     how: ['Sit on floor, legs straddled at moderate width (slightly narrower than max)','Hold a weight plate or dumbbell (6–10 kg) at chest height','Stack books in front as a head-height target','Hinge forward at hips with slight arch (straight back phase)','When arch is lost: let spine flex, drop head — drive FORWARD not just down','At bottom: contract hip flexors to pull deeper. Hold for tempo','Extend spine back to straight, then lift to upright','Touch point order: forehead → nose → chin → chest → belly'],
     measureLabel: 'Touch point reached (forehead/nose/chin/chest) / stack height', approxMin: 10
   },
@@ -683,6 +717,109 @@ const EXERCISES = {
     prescription: '1–2 sets × 10–20 sec per side · Yoga block between thigh and abdomen',
     how: ['Elevate one leg to roughly hip height (chair, box, or table)','Let the hip open to the side — like the pancake position','Place a yoga block between your thigh and abdomen','Find a position slightly before your end range where you can generate force','Drive from both sides simultaneously: torso down AND leg up — try to crush the block','Ramp intensity from 20% up to ~80–90% over a few seconds','Hold for prescribed time. This wakes up the muscles, not stretch'],
     measureLabel: 'Left/right done (yes/no)', approxMin: 4
+  },
+  drop_stance_squats: {
+    id: 'drop_stance_squats', name: 'Drop Stance Squats',
+    badge: 'loaded-stretch', category: 'sidesplit',
+    sets: 2, reps: 6, holdSec: 3, tempo: '2-3-1-0', unit: 'reps',
+    equipment: 'bodyweight', priority: 5,
+    skills: ['sidesplit', 'combined'],
+    prescription: '2 sets × 6 reps per side · Tempo 2-3-1-0 · Left first · Elevate foot if needed',
+    how: ['Start in wide straddle stance, feet slightly turned out','Shift weight onto one leg — drop down by bending that knee','Keep foot flat and pointing FORWARD — not turning out into a cross-squat','The loaded leg gets a strong adductor stretch at the inner thigh','Elevate working foot on a platform if you lack the flexibility to keep it flat','Left first, match reps on right exactly','Add weight for stronger individuals. Use progressive underload if you plateau'],
+    measureLabel: 'Foot elevated? (yes/no) / depth reached', approxMin: 10
+  },
+  kneeling_tilt: {
+    id: 'kneeling_tilt', name: 'Kneeling Tilt',
+    badge: 'active', category: 'sidesplit',
+    sets: 3, reps: 6, holdSec: 3, tempo: '1-3-1-0', unit: 'reps',
+    equipment: 'bodyweight', priority: 6,
+    skills: ['sidesplit', 'combined'],
+    prescription: '3 sets × 6 reps · Tempo 1-3-1-0 · Closed hip · Left first',
+    how: ['Kneel on one knee, working leg extended to the side. Left first','Keep chest high, slight anterior pelvic tilt throughout','Lift the extended leg away from the floor using hip abductors','Track height lifted using a stack of blocks as a target — aim higher each session','Closed hip variation transfers best to side split — use this first','Extend the leg to increase difficulty, bend to decrease it','Weakest side first, match reps exactly on stronger side'],
+    measureLabel: 'Leg height reached / stack height (cm)', approxMin: 8
+  },
+  hanging_magnus: {
+    id: 'hanging_magnus', name: 'Hanging Magnus',
+    badge: 'loaded-stretch', category: 'pike',
+    sets: 2, reps: 4, holdSec: 3, tempo: '2-3-2-0', unit: 'reps',
+    equipment: 'dumbbells', equipmentAlt: 'bodyweight', priority: 5,
+    skills: ['pike', 'combined'],
+    prescription: '2 sets × 4 reps per side · Tempo 2-3-2-0 · Light weight · Left first',
+    how: ['Elevate one bent leg to hip height — this is the side being stretched','Turn knee out slightly to give room as you lean forward','Hold a few kg or use bodyweight only to start','Lean forward until back can no longer stay straight — let it round','Drop head, allow spine to round like a Jefferson curl but unilateral','At bottom: contract hip flexors hard — squeeze thigh to abdomen gap','Reverse: extend hips first, then spine. Left first, match right'],
+    measureLabel: 'Weight used / depth reached', approxMin: 9
+  },
+  straight_arm_lifts: {
+    id: 'straight_arm_lifts', name: 'Pancake Straight Arm Lifts',
+    badge: 'active', category: 'pancake',
+    sets: 3, reps: 3, holdSec: 5, tempo: null, unit: 'reps',
+    equipment: 'dumbbells', priority: 6,
+    skills: ['pancake'],
+    prescription: '3 sets × 3 reps · 5 sec hold each · Start 0.5–3 kg · Slightly narrow straddle',
+    how: ['Set up in pancake — use a slightly narrower straddle than usual for better leverage','Hold very light dumbbells or plates — start 0.5–1 kg per hand','Lift weights just off the floor with arms extended — only 5–8 cm off floor','Hold 5 sec. Think about reaching FORWARD not just up','Lower, rest briefly in the pancake, repeat','Progress to heavier weight as you get stronger at this position','Bridges the gap from head-to-floor to belly-to-floor'],
+    measureLabel: 'Weight used / arms reaching forward or pulling upward?', approxMin: 8
+  },
+  powell_raises: {
+    id: 'powell_raises', name: 'Powell Raises',
+    badge: 'active', category: 'shoulders',
+    sets: 3, reps: 8, holdSec: 0, tempo: '2-0-2-0', unit: 'reps',
+    equipment: 'dumbbells', priority: 3, skills: ['shoulders'],
+    prescription: '3 sets × 8 reps · Tempo 2-0-2-0 · Start very light · Weakest side first',
+    how: ['Lie on side on bench, hips stacked, knees bent in front for stability','Non-working arm bent under neck to support head','5 degree elbow bend in working arm','Initiate by retracting scapula — pull shoulder blade back and down','Lift dumbbell in smooth arc, stopping when dumbbell is vertical above shoulder','Allow scapula to protract fully at bottom before each rep','Weakest side first, match exactly on stronger side. Use microplates — even 0.5 kg increments matter'],
+    measureLabel: 'Weight / left vs right difference', approxMin: 8
+  },
+  trap_raises: {
+    id: 'trap_raises', name: 'Trap 3 & 1 Raises',
+    badge: 'active', category: 'shoulders',
+    sets: 3, reps: 8, holdSec: 3, tempo: '1-3-1-0', unit: 'reps',
+    equipment: 'dumbbells', priority: 4, skills: ['shoulders'],
+    prescription: '3 sets × 8 reps · Trap 3 first · Unilateral · Weakest side first',
+    how: ['Adjustable bench at ~60 degrees, bent-over supported position','TRAP 3 (start here): retract and depress scapula (down and back). Keep this while lifting arm overhead. Reset scapula at bottom of every rep. Do Trap 3 only first phase','TRAP 1 (add later): elevate and protract scapula (up and forward) — simulates press handstand. Add after Trap 3 is established','Weakest side first, match stronger side','Active flexibility goal: pause 6 sec at top. Strength goal: heavier load, slow eccentric only'],
+    measureLabel: 'Weight / Trap 3 or Trap 1 or both this session', approxMin: 10
+  },
+  external_rotation: {
+    id: 'external_rotation', name: 'Elbow-on-Knee External Rotation',
+    badge: 'active', category: 'shoulders',
+    sets: 3, reps: 8, holdSec: 2, tempo: '1-2-1-0', unit: 'reps',
+    equipment: 'dumbbells', priority: 5, skills: ['shoulders'],
+    prescription: '3 sets × 8 reps · Tempo 1-2-1-0 · 3 angles: 90°, 135°, 180° · Weakest first',
+    how: ['Sit with elbow resting on knee, upper arm horizontal','Start position as close to vertical as current range allows','Lower weight with control to deepest range without shoulder rolling forward','Lift back to start. Pause 2 sec at bottom','3 angles: 90° (weakest), 135°, 180° (strongest). Start at 180° and progress to 90° over phases','Weakest side first. Match reps and weight on stronger side. Use microplates'],
+    measureLabel: 'Weight / angle used / left vs right range difference', approxMin: 8
+  },
+  pec_stretch: {
+    id: 'pec_stretch', name: 'Pec Stretch — Passive, Contract-Relax & Lift-Offs',
+    badge: 'loaded-stretch', category: 'shoulders',
+    sets: 2, reps: null, holdSec: 90, tempo: null, unit: 'hold',
+    equipment: 'bodyweight', priority: 6, skills: ['shoulders'],
+    prescription: '2 × 90 sec passive + contract-relax cycles · Hand at ear height',
+    how: ['Stand side-on to wall, hand at roughly ear height, elbow bent','Drive shoulder forward — feel stretch across chest','Basic: hold 90 sec, deepen on each exhale','Contract-relax: push into wall 5 sec (~90% effort) → relax and go deeper 5 sec. Repeat 3–5 cycles','End range lift-off: push into wall 5 sec → lift hand away from wall while keeping position','Adjust hand height and proximity to wall to shift emphasis between pec and bicep'],
+    measureLabel: 'Angle / left vs right difference', approxMin: 8
+  },
+  int_rotation_cr: {
+    id: 'int_rotation_cr', name: 'Internal Rotation Stretch — Contract-Relax',
+    badge: 'loaded-stretch', category: 'shoulders',
+    sets: 2, reps: 4, holdSec: 8, tempo: null, unit: 'cycles',
+    equipment: 'bands', equipmentAlt: 'bodyweight', priority: 7, skills: ['shoulders'],
+    prescription: '2 sets × 4 cycles · Band through leg setup · 8 sec contract, 8 sec relax',
+    how: ['Band setup: loop band around wrist with band passing through between your legs','Shuffle away from anchor until you feel stretch on external rotators','Keep shoulder PINNED back throughout — this is critical','CONTRACT (8 sec): pull into internal rotation against the band — ~80% effort','RELAX (8 sec): let band pull you deeper, shuffle slightly further away','After cycles: let go of band, actively internally rotate as far as possible for 15 sec','Use before external rotation strength work to open range first'],
+    measureLabel: 'Cycles completed / left vs right difference', approxMin: 8
+  },
+  ext_rotation_cr: {
+    id: 'ext_rotation_cr', name: 'External Rotation Stretch — Contract-Relax',
+    badge: 'loaded-stretch', category: 'shoulders',
+    sets: 2, reps: 4, holdSec: 8, tempo: null, unit: 'cycles',
+    equipment: 'bands', equipmentAlt: 'bodyweight', priority: 8, skills: ['shoulders'],
+    prescription: '2 sets × 4 cycles · Elbow-on position · 8 sec contract, 8 sec relax',
+    how: ['Set up in elbow-on position with band pulling into external rotation','CONTRACT (8 sec): pull into internal rotation against the band — ~80% effort','RELAX (8 sec): let band pull you deeper into external rotation, shuffle further away','After cycles: let go of band, actively externally rotate as far as possible for 15 sec','Safe to use before a strength session without impairing performance'],
+    measureLabel: 'Cycles / range improvement noted? (yes/no)', approxMin: 8
+  },
+  straps_band: {
+    id: 'straps_band', name: 'Straps / Band Shoulder Routine',
+    badge: 'technique', category: 'shoulders',
+    sets: 1, reps: null, holdSec: 300, tempo: null, unit: 'hold',
+    equipment: 'bands', priority: 2, skills: ['shoulders'],
+    prescription: '5–10 min free-flow · Band looped through wrist (straps grip) · Both sides equally',
+    how: ['Anchor band at a solid point. Loop around wrist — band hooks behind wrist between thumb and forefinger','Walk back until you feel tension. This grip allows intense stretch without gripping tight','Explore angles: arm by side, overhead, across body, various heights','PASSIVE: let band pull the shoulder out — relax into the stretch','ACTIVE: fight against the band — retract and depress scapula while band pulls the other way','Try supination/pronation variations, bent-arm vs straight-arm, circumduction (circles)','Do both sides equally — can serve as warm-up, assessment, or dedicated training'],
+    measureLabel: 'Tightest angles found today', approxMin: 8
   }
 };
 
@@ -695,8 +832,8 @@ const PROGRAMS = {
     skill: 'pike', skillLabel: 'Pike', phase: 1,
     sessions: [{
       id: 'A', label: 'Session A', focus: 'Pike',
-      exercises: ['calf_stretch','tibialis_raises','jefferson_curl','pike_good_morning','pike_lift_cracr','pike_active_lifts','passive_pike_hold'],
-      approxMin: 58
+      exercises: ['calf_stretch','tibialis_raises','jefferson_curl','pike_good_morning','hanging_magnus','pike_lift_cracr','pike_active_lifts','passive_pike_hold'],
+      approxMin: 65
     }],
     exitCriteria: ['Standing pike good morning: head reaches floor level','Seated pike active lifts: hands past knees cleanly','Passive pike hold: reaching toes or beyond','Dorsiflexion: heels stay down in ATG squat']
   },
@@ -704,8 +841,8 @@ const PROGRAMS = {
     skill: 'pancake', skillLabel: 'Pancake', phase: 1,
     sessions: [{
       id: 'A', label: 'Session A', focus: 'Pancake',
-      exercises: ['foot_rolling','calf_stretch','tibialis_raises','pancake_hang_pir','straddle_jefferson','pancake_good_morning','pancake_active_lifts','block_crush'],
-      approxMin: 62
+      exercises: ['foot_rolling','calf_stretch','tibialis_raises','tailors_pose','pancake_hang_pir','straddle_jefferson','pancake_good_morning','pancake_active_lifts','block_crush'],
+      approxMin: 70
     }],
     exitCriteria: ['Standing pancake hang: hip flexors pulling actively, not just hanging','Pancake good morning: chin or chest making contact with floor','Seated pancake: no longer falling backward — anterior pelvic tilt maintained','Dorsiflexion: heels stay down in ATG squat']
   },
@@ -713,17 +850,26 @@ const PROGRAMS = {
     skill: 'sidesplit', skillLabel: 'Side Split', phase: 1,
     sessions: [{
       id: 'A', label: 'Session A', focus: 'Side Split',
-      exercises: ['donkey_calf','horse_stance_slides','tailors_pose','horse_stance_squats','adductor_flyes','isometric_split'],
-      approxMin: 55
+      exercises: ['donkey_calf','tibialis_raises','horse_stance_slides','tailors_pose','horse_stance_squats','drop_stance_squats','kneeling_tilt','adductor_flyes','isometric_split'],
+      approxMin: 72
     }],
-    exitCriteria: ['Horse stance squats: 7-step width, hips below knees consistently','Isometric side split: 60 sec hold hands-free','Tailor\'s pose: knees touching floor or close','Dorsiflexion: heels stay down in ATG squat']
+    exitCriteria: ['Horse stance squats: 7-step width, hips below knees consistently','Isometric side split: 60 sec hold hands-free','Drop stance squats: flat floor no elevation needed','Dorsiflexion: heels stay down in ATG squat']
+  },
+  shoulders: {
+    skill: 'shoulders', skillLabel: 'Shoulders', phase: 1,
+    sessions: [{
+      id: 'A', label: 'Session A', focus: 'Shoulders',
+      exercises: ['straps_band','ext_rotation_cr','int_rotation_cr','powell_raises','trap_raises','external_rotation','pec_stretch'],
+      approxMin: 62
+    }],
+    exitCriteria: ['Leahy test: arm reaches 150°+ without stick twisting','External rotation: 45° past vertical both sides','Powell raises: working with meaningful weight and full scapular retraction','Pec stretch: full passive range with minimal discomfort']
   },
   combined: {
     skill: 'combined', skillLabel: 'All Three Skills', phase: 1,
     sessions: [{
       id: 'A', label: 'Session A', focus: 'Pike + Pancake + Side Split',
-      exercises: ['calf_stretch','tibialis_raises','horse_stance_slides','tailors_pose','horse_stance_squats','straddle_jefferson','pancake_good_morning','pancake_hang_pir','pike_lift_cracr','adductor_flyes','isometric_split'],
-      approxMin: 82
+      exercises: ['calf_stretch','tibialis_raises','horse_stance_slides','tailors_pose','horse_stance_squats','drop_stance_squats','straddle_jefferson','pancake_good_morning','pancake_hang_pir','pike_lift_cracr','kneeling_tilt','adductor_flyes','isometric_split'],
+      approxMin: 88
     }],
     exitCriteria: ['Standing pancake hang: hip flexors pulling actively','Horse stance squats: 7-step width, hips below knees consistently','Isometric side split: 60 sec hold hands-free','Seated pancake: no longer falling backward','Dorsiflexion: heels stay down in ATG squat','Pike active lifts: hands past knees cleanly']
   }
@@ -736,89 +882,127 @@ const PROGRAMS = {
 const ASSESS_QUESTIONS = {
   pike: [
     {
-      id: 'pike_reach',
-      q: 'Sitting with legs straight, how far can you reach forward?',
-      hint: 'Reach as far as you can without bending your knees. Be honest.',
-      type: 'options',
-      options: ['Can\'t reach past my knees','Reach to my knees','Reach mid-shin','Reach my ankles','Reach my toes','Palms flat on floor']
+      id: 'pike_reach', type: 'single',
+      q: 'Pike reach test — sit and reach',
+      test: 'Sit on the floor, legs straight together. Reach both hands forward as far as possible without bending your knees. Hold 3 seconds. Note exactly where your fingertips land.',
+      hint: 'This determines your starting exercise selection.',
+      options: ['Short of my knees','Around my knees','Mid-shin','My ankles','My toes','Palms flat on the floor']
     },
     {
-      id: 'calf_issue',
-      q: 'In a deep squat, what happens to your heels?',
-      hint: 'Squat as low as you can and observe your heels.',
-      type: 'options',
-      options: ['Heels lift off the ground','Heels rise slightly','Heels stay flat']
+      id: 'calf_issue', type: 'single',
+      q: 'Deep squat heel test',
+      test: 'Stand feet shoulder-width, squat as deep as you can. Watch what your heels do.',
+      hint: 'Heel rise indicates limited ankle dorsiflexion.',
+      options: ['Both heels lift off the ground','Heels rise slightly','One heel rises more than the other','Heels stay flat']
     },
     {
-      id: 'dorsiflex',
-      q: 'Standing flat-footed, can you lift your toes off the ground?',
-      hint: 'Try to raise your toes while keeping your heels planted.',
-      type: 'options',
-      options: ['Cannot lift toes at all','Barely lift toes','Lift toes easily']
+      id: 'dorsiflex', type: 'single',
+      q: 'Standing toe lift test',
+      test: 'Stand flat-footed. Try to lift your toes off the ground while keeping your heels planted.',
+      hint: 'Tests the tibialis anterior — the muscle on the front of your shin.',
+      options: ['Cannot lift toes at all','Can barely lift toes','Can lift toes but with effort','Can lift toes easily']
     }
   ],
   pancake: [
     {
-      id: 'pancake_reach',
-      q: 'Sitting in a wide straddle, what can you reach forward?',
-      hint: 'Open legs wide and reach both hands forward on the floor.',
-      type: 'options',
-      options: ['Fall backward without core engaged','Reach thigh level','Reach floor in front','Reach past halfway to floor','Chest to floor','Belly to floor']
+      id: 'pancake_reach', type: 'single',
+      q: 'Seated straddle reach test',
+      test: 'Sit on the floor, open your legs as wide as comfortable. Reach both hands forward on the floor in front of you.',
+      hint: 'This directly selects your main pancake exercise.',
+      options: ['Fall backward without actively engaging core','Hands reach hip level only','Hands reach to about knee/thigh level on the floor','Hands pass the knee line','Head can touch the floor','Chest can touch the floor','Belly to floor']
     },
     {
-      id: 'pancake_width',
-      q: 'When you sit in a straddle, how wide can you comfortably open?',
-      hint: 'Open legs wide — note where it gets tight.',
-      type: 'options',
+      id: 'pancake_width', type: 'single',
+      q: 'Straddle width test',
+      test: 'Open your legs as wide as you can while sitting and hold briefly. 90° = legs form a right angle.',
+      hint: '',
       options: ['Less than 90°','Around 90°','Around 120°','Around 150° or more']
     },
     {
-      id: 'pancake_tilt',
-      q: 'Can you maintain an arched lower back in the straddle position?',
-      hint: 'Try to stick your chest forward and arch your lower back while sitting in the straddle.',
-      type: 'options',
-      options: ['No — my back rounds and I fall back','I can maintain it briefly','Yes fairly easily']
+      id: 'pancake_tilt', type: 'single',
+      q: 'Pelvic tilt test in straddle',
+      test: 'Sit in your straddle. Try to push your chest forward and arch your lower back — like sticking your bum backward while sitting.',
+      hint: 'If you fall backward, hip flexors need extra work before seated pancake drilling.',
+      options: ['Cannot do it — I fall backward immediately','Can hold briefly with a lot of effort','Can maintain it fairly easily']
     }
   ],
   sidesplit: [
     {
-      id: 'split_width',
-      q: 'How wide can you open your legs to the side?',
-      hint: 'Stand and open legs sideways as far as comfortable. Estimate the angle.',
-      type: 'options',
-      options: ['Less than 60°','Around 60–80°','Around 90°','Around 120°','Around 150°+']
+      id: 'split_width', type: 'single',
+      q: 'Standing side opening test',
+      test: 'Stand and slowly open your legs to the side as far as comfortable. Hold briefly. Estimate the angle — 90° = a right angle between your legs.',
+      hint: '',
+      options: ['Less than 60°','Around 60–80°','Around 90°','Around 120°','Around 150° or more']
     },
     {
-      id: 'adductor_tightness',
-      q: 'Where do you feel tightness when opening legs?',
-      hint: 'Pay attention to exactly where the restriction is.',
-      type: 'options',
-      options: ['Deep in the hip joint (bone feeling)','Inner thigh (muscle tightness)','Both hip and inner thigh','Behind the knee']
+      id: 'split_feeling', type: 'multi',
+      q: 'Where do you feel the restriction?',
+      test: 'Open to your limit and pay close attention to where the tightness is.',
+      hint: 'Select all that apply.',
+      options: ['Deep in the hip joint — a bony or jamming feeling','Inner thigh muscles — a pulling or stretching feeling','Behind the knee','Lower back tightens up when opening wide']
     },
     {
-      id: 'left_right',
-      q: 'Is there a difference between left and right leg?',
-      hint: 'Try each leg separately — does one feel stiffer or weaker?',
-      type: 'options',
-      options: ['Left feels noticeably worse','Right feels noticeably worse','Both feel similar']
+      id: 'left_right', type: 'single',
+      q: 'Left vs right leg comparison',
+      test: 'Try kicking each leg gently to the side one at a time. Compare the feel and range.',
+      hint: 'A noticeable difference will affect your training.',
+      options: ['Left feels noticeably stiffer or weaker','Right feels noticeably stiffer or weaker','Both feel very similar']
+    }
+  ],
+  shoulders: [
+    {
+      id: 'leahy_test', type: 'single',
+      q: 'Leahy test — shoulder flexion range',
+      test: 'Sit upright. Hold a stick or rod at its centre, palm facing up. Keep elbow LOCKED. Slowly lift the stick overhead. Stop the moment the stick starts to twist or elbow bends.',
+      hint: 'Full range = 180° (stick pointing straight up). A camera on the floor pointing up helps you measure repeatably.',
+      options: ['Stick twists before reaching horizontal (under 90°)','Around 90–120°','Around 120–150°','Around 150–170°','Full 180° — stick points straight up without twisting']
+    },
+    {
+      id: 'ext_rotation_test', type: 'single',
+      q: 'External rotation test — arm by side',
+      test: 'Sit with elbow supported on a surface, upper arm by your side. Rotate your forearm outward as far as possible without your shoulder rolling forward.',
+      hint: 'Full range = 45° past horizontal.',
+      options: ['Cannot reach horizontal','Reach roughly horizontal (0°)','5–20° past horizontal','21–44° past horizontal','45° or more (full range)']
+    },
+    {
+      id: 'lat_test', type: 'single',
+      q: 'Lat length test',
+      test: 'Lie on your back. Pull both knees into your chest, curling your lower back. KEEPING this curled position, try to lower both arms overhead at shoulder width.',
+      hint: 'Compare to lying flat. If curling improves your overhead range, lats are a limiter.',
+      options: ['Significant restriction — arms stop well before floor','Arms reach about halfway down','Arms get most of the way down','Arms reach the floor when back is curled']
+    },
+    {
+      id: 'pec_test', type: 'single',
+      q: 'Pec minor test',
+      test: 'Partner required: Lie on your back, arms slightly out from sides. Partner gently presses both shoulders toward the floor at the same time.',
+      hint: 'If you feel a stretch when shoulders are pressed flat, pec minor is tight.',
+      partner: true,
+      options: ['Skip — no partner available right now','Feel a definite stretch when shoulders are pressed flat','No stretch felt — shoulders press flat easily']
+    },
+    {
+      id: 'shoulder_symptoms', type: 'multi',
+      q: 'Any current shoulder issues?',
+      test: 'Think about how your shoulders feel day-to-day and during activity.',
+      hint: 'Select all that apply.',
+      options: ['No pain or issues at all','Pain or clicking when lifting arm overhead','Pain at the front of the shoulder','Pain when reaching behind your back','General stiffness throughout the day','Previous injury or surgery']
     }
   ]
 };
 
 const COMMON_QUESTIONS = [
   {
-    id: 'training_days',
-    q: 'How many days per week can you train?',
-    hint: 'Be realistic — consistency beats frequency.',
-    type: 'options',
-    options: ['2 days','3 days','4–5 days']
+    id: 'training_days', type: 'single',
+    q: 'How many days per week can you realistically train?',
+    test: 'Be honest — 3 consistent sessions beats 5 inconsistent ones.',
+    hint: '',
+    options: ['2 days per week','3 days per week','4–5 days per week']
   },
   {
-    id: 'equipment',
+    id: 'equipment', type: 'multi',
     q: 'What equipment do you have access to?',
-    hint: 'Select what you can realistically use.',
-    type: 'options',
-    options: ['Just my bodyweight','Resistance bands','Dumbbells / kettlebells','Full gym access']
+    test: 'Select everything you have reliable access to at your training space.',
+    hint: 'Select all that apply.',
+    options: ['Just my bodyweight','Resistance bands','Dumbbells or kettlebells','Adjustable bench','Full gym access']
   }
 ];
 
@@ -827,16 +1011,17 @@ const COMMON_QUESTIONS = [
 // ═══════════════════════════════════════════════════════
 
 let state = {
-  user: null, // { name, skill, assessAnswers }
-  program: null, // PROGRAMS[skill]
-  sessions: [], // completed session logs
-  currentSession: null // active session data
+  user: null,
+  program: null,
+  sessions: [],
+  currentSession: null
 };
 
 let assessStep = 0;
 let assessQuestions = [];
 let assessAnswers = {};
 let selectedSkill = null;
+let selectedRPE = null;
 let timerInterval = null;
 let timerSeconds = 0;
 let timerRunning = false;
@@ -846,12 +1031,12 @@ let timerRunning = false;
 // ═══════════════════════════════════════════════════════
 
 function saveState() {
-  try { localStorage.setItem('flextrack_state', JSON.stringify(state)); } catch(e) {}
+  try { localStorage.setItem('flextrack_v2', JSON.stringify(state)); } catch(e) {}
 }
 
 function loadState() {
   try {
-    const s = localStorage.getItem('flextrack_state');
+    const s = localStorage.getItem('flextrack_v2');
     if (s) { state = JSON.parse(s); return true; }
   } catch(e) {}
   return false;
@@ -882,6 +1067,66 @@ function startAssessment() {
   assessQuestions = [...skillQuestions, ...COMMON_QUESTIONS];
   renderAssessStep();
   showScreen('assess');
+}
+
+function renderAssessStep() {
+  const q = assessQuestions[assessStep];
+  const total = assessQuestions.length;
+  const pct = (assessStep / total) * 100;
+  document.getElementById('assess-fill').style.width = pct + '%';
+  const skillLabel = selectedSkill === 'combined' ? 'Assessment' : (selectedSkill || '').replace('sidesplit','Side Split').replace('pike','Pike').replace('pancake','Pancake').replace('shoulders','Shoulders');
+  document.getElementById('assess-step-label').textContent = `${skillLabel} · Step ${assessStep + 1} of ${total}`;
+  document.getElementById('assess-back-btn').style.display = assessStep === 0 ? 'none' : 'flex';
+
+  const isMulti = q.type === 'multi';
+  let html = `<div class="assess-q">${q.q}</div>`;
+  if (q.test) html += `<div style="background:var(--bg3);border:1px dashed var(--border2);border-radius:var(--radius-sm);padding:12px 14px;font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:16px;">${q.test}</div>`;
+  if (q.hint) html += `<div class="assess-hint">${q.hint}</div>`;
+  if (q.partner) html += `<div style="background:rgba(144,128,240,0.06);border:1px solid rgba(144,128,240,0.3);border-radius:var(--radius-sm);padding:12px 14px;font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:12px;">👥 <strong>Partner required.</strong> If no partner is available, select "Skip — no partner available right now" and continue. You can retest later in Settings.</div>`;
+
+  html += `<div style="display:flex;flex-direction:column;gap:10px;" id="assess-opts">`;
+  q.options.forEach(o => {
+    const stored = assessAnswers[q.id];
+    const isSel = isMulti ? (Array.isArray(stored) && stored.includes(o)) : (stored === o);
+    const pillStyle = isMulti ? 'border-radius:var(--radius-sm);' : '';
+    html += `<div class="option-pill ${isSel ? 'selected' : ''}" style="${pillStyle}" onclick="selectAssessOpt(this,'${q.id}','${o.replace(/'/g,"\\'")}',${isMulti})">${o}</div>`;
+  });
+  html += `</div>`;
+  if (isMulti) html += `<div class="font-mono font-xs text-dim" style="margin-top:8px;">Select all that apply — tap to toggle</div>`;
+
+  document.getElementById('assess-content').innerHTML = html;
+  document.getElementById('assess-scroll').scrollTop = 0;
+}
+
+function selectAssessOpt(el, id, val, multi) {
+  if (multi) {
+    if (!assessAnswers[id]) assessAnswers[id] = [];
+    const idx = assessAnswers[id].indexOf(val);
+    if (idx > -1) { assessAnswers[id].splice(idx, 1); el.classList.remove('selected'); }
+    else { assessAnswers[id].push(val); el.classList.add('selected'); }
+  } else {
+    document.querySelectorAll('#assess-opts .option-pill').forEach(p => p.classList.remove('selected'));
+    el.classList.add('selected');
+    assessAnswers[id] = val;
+  }
+}
+
+function assessNext() {
+  const q = assessQuestions[assessStep];
+  const ans = assessAnswers[q.id];
+  if (!ans || (Array.isArray(ans) && ans.length === 0)) { alert('Please select an answer to continue.'); return; }
+  assessStep++;
+  if (assessStep >= assessQuestions.length) {
+    state.user.assessAnswers = assessAnswers;
+    generateProgram();
+  } else {
+    renderAssessStep();
+  }
+}
+
+function assessBack() {
+  if (assessStep > 0) { assessStep--; renderAssessStep(); }
+}
 }
 
 function renderAssessStep() {
@@ -936,84 +1181,84 @@ function generateProgram() {
   state.program = JSON.parse(JSON.stringify(PROGRAMS[skill]));
   const ans = state.user.assessAnswers;
 
-  // Adjust based on assessment answers
-  // Dorsiflexion priority
-  const heelRise = ans.calf_issue === 'Heels lift off the ground' || ans.calf_issue === 'Heels rise slightly';
-  const cantDorsiflex = ans.dorsiflex === 'Cannot lift toes at all' || ans.dorsiflex === 'Barely lift toes';
+  const heelRise = ans.calf_issue && (ans.calf_issue.includes('lift') || ans.calf_issue.includes('rise'));
+  const cantDorsiflex = ans.dorsiflex && (ans.dorsiflex.includes('Cannot') || ans.dorsiflex.includes('barely'));
   state.program.dorsiflexionPriority = heelRise || cantDorsiflex;
+  state.program.leftWeaker = ans.left_right === 'Left feels noticeably stiffer or weaker';
+  state.program.rightWeaker = ans.left_right === 'Right feels noticeably stiffer or weaker';
+  state.program.needsPelvicTiltWork = ans.pancake_tilt && ans.pancake_tilt.includes('fall backward');
+  state.program.bonyRestriction = Array.isArray(ans.split_feeling) && ans.split_feeling.some(s => s.includes('bony'));
+  state.program.latTight = ans.lat_test && !ans.lat_test.includes('floor');
+  state.program.extRotLimited = ans.ext_rotation_test && (ans.ext_rotation_test.includes('Cannot') || ans.ext_rotation_test.includes('horizontal (0'));
+  state.program.pecSkipped = ans.pec_test === 'Skip — no partner available right now';
+  state.program.pecTight = ans.pec_test && ans.pec_test.includes('stretch');
 
-  // Left/right flag
-  state.program.leftWeaker = ans.left_right === 'Left feels noticeably worse';
-  state.program.rightWeaker = ans.left_right === 'Right feels noticeably worse';
+  // Pancake depth-based drill unlock
+  if (skill === 'pancake' || skill === 'combined') {
+    const reach = ans.pancake_reach || '';
+    if (reach.includes('Head') || reach.includes('Chest') || reach.includes('Belly')) {
+      if (!state.program.sessions[0].exercises.includes('straight_arm_lifts')) {
+        state.program.sessions[0].exercises.splice(-2, 0, 'straight_arm_lifts');
+      }
+    }
+  }
 
-  // Pancake: if can't maintain pelvic tilt, flag
-  state.program.needsPelvicTiltWork = ans.pancake_tilt === 'No — my back rounds and I fall back';
+  renderLimiterSummary();
+  showScreen('summary');
+}
 
+function renderLimiterSummary() {
+  const p = state.program;
+  const limiters = [];
+  if (p.dorsiflexionPriority) limiters.push({ icon: '⚠', label: 'Dorsiflexion restriction', desc: 'Heels rising or limited ankle mobility detected. Calf stretches and tibialis raises will appear in every session until resolved.', action: 'Calf + tibialis raises prioritised every session' });
+  if (p.leftWeaker) limiters.push({ icon: '↔', label: 'Left side weaker/stiffer', desc: 'All unilateral work starts left. Right side matches left only — never exceeds it.', action: 'Left-first rule applied to all single-leg exercises' });
+  if (p.rightWeaker) limiters.push({ icon: '↔', label: 'Right side weaker/stiffer', desc: 'All unilateral work starts right. Left side matches right only.', action: 'Right-first rule applied' });
+  if (p.needsPelvicTiltWork) limiters.push({ icon: '↻', label: 'Hip flexor/pelvic tilt weakness', desc: 'You fall backward in the straddle — hip flexors cannot yet create anterior pelvic tilt against gravity. Standing pancake hang is the priority exercise before any seated pancake work.', action: 'Standing pancake hang prioritised above all seated work' });
+  if (p.bonyRestriction) limiters.push({ icon: '🦴', label: 'Hip joint restriction detected', desc: 'You feel a bony/jamming sensation. Triangle alignment is especially critical — hips back, arch maintained at all times.', action: 'Triangle alignment cues emphasised throughout' });
+  if (p.latTight) limiters.push({ icon: '💪', label: 'Lat tightness limiting overhead', desc: 'Lats are restricting your shoulder flexion range. Lat-specific work is prioritised in shoulder sessions.', action: 'Lat work prioritised' });
+  if (p.extRotLimited) limiters.push({ icon: '🔄', label: 'External rotation restriction', desc: 'Limited external rotation range detected. Contract-relax work prioritised before strength exercises.', action: 'Ext rotation CR added before strength work' });
+  if (p.pecSkipped) limiters.push({ icon: '👥', label: 'Pec major test skipped', desc: 'Partner test skipped. Pec exercises included as standard until retested.', action: 'Retest in Settings when a partner is available' });
+
+  let html = `<div class="note-box" style="margin-top:4px;">Based on your assessment — review these before your first session.</div>`;
+  if (limiters.length) {
+    html += `<div class="sec-label" style="padding:0;">Identified limiters</div>`;
+    limiters.forEach(l => {
+      html += `<div class="card mb8"><div class="flex gap8 mb8"><span style="font-size:20px;">${l.icon}</span><span class="fw700">${l.label}</span></div><div class="card-sub mb8">${l.desc}</div><div class="badge badge-accent">${l.action}</div></div>`;
+    });
+  } else {
+    html += `<div class="card mb8"><div class="card-sub">No major limiters identified. Standard Phase 1 program generated. Reassess after 4 weeks.</div></div>`;
+  }
+  if (p.pecSkipped) html += `<div style="background:rgba(144,128,240,0.06);border:1px solid rgba(144,128,240,0.3);border-radius:var(--radius-sm);padding:12px 14px;font-size:12px;color:var(--text2);line-height:1.7;margin:10px 0;">👥 <strong>Pec test pending:</strong> Complete with a partner and update in Settings when available.</div>`;
+  html += `<button class="btn btn-primary mt16" onclick="showProgramPreview()">View your program →</button><div style="height:32px;"></div>`;
+  document.getElementById('summary-content').innerHTML = html;
+}
+
+function showProgramPreview() {
   renderProgramPreview();
   showScreen('program-preview');
 }
 
 function renderProgramPreview() {
   const p = state.program;
-  const ans = state.user.assessAnswers;
-  const skill = EXERCISES[p.sessions[0].exercises[0]]; // just for reference
+  const badgeMap = { 'weak-link': 'badge-teal', 'loaded-stretch': 'badge-purple', 'active': 'badge-coral', 'passive': 'badge-gray', 'technique': 'badge-amber' };
+  const labelMap = { 'weak-link': 'weak link', 'loaded-stretch': 'loaded', 'active': 'active', 'passive': 'passive', 'technique': 'technique' };
 
-  let limiters = [];
-  if (p.dorsiflexionPriority) limiters.push({ icon: '⚠', label: 'Dorsiflexion', desc: 'Heels rising / limited ankle mobility — calf and tibialis work prioritised every session.' });
-  if (p.leftWeaker) limiters.push({ icon: '↔', label: 'Left leg imbalance', desc: 'Left leg noted as weaker/stiffer. All unilateral work starts left — right matches left only.' });
-  if (p.needsPelvicTiltWork) limiters.push({ icon: '↻', label: 'Hip flexor weakness', desc: 'Can\'t maintain anterior pelvic tilt seated. Standing pancake hang builds this pattern first.' });
-
-  let html = `
-    <div class="card mb12">
-      <div class="flex-between mb8">
-        <div class="card-title">${p.skillLabel} — Phase 1</div>
-        <div class="badge badge-accent">Generated</div>
-      </div>
-      <div class="card-sub">${p.sessions.length} session type · ${p.sessions[0].approxMin} min per session · 3× per week recommended</div>
-    </div>`;
-
-  if (limiters.length) {
-    html += `<div class="sec-label" style="padding:0; margin-top:0;">Your limiting factors</div>`;
-    limiters.forEach(l => {
-      html += `<div class="card card-sm mb8">
-        <div class="flex gap8 mb8"><span style="font-size:18px">${l.icon}</span><span class="fw700">${l.label}</span></div>
-        <div class="card-sub">${l.desc}</div>
-      </div>`;
-    });
-  }
-
-  html += `<div class="sec-label" style="padding:0; margin-top:16px;">Session overview</div>`;
+  let html = `<div class="card mb12"><div class="flex-between mb8"><div class="card-title">${p.skillLabel} — Phase 1</div><div class="badge badge-accent">Generated</div></div><div class="card-sub">${p.sessions[0].exercises.length} exercises · ~${p.sessions[0].approxMin} min · 3× per week</div></div>`;
+  html += `<div class="sec-label" style="padding:0;">Session overview</div>`;
   p.sessions.forEach(s => {
-    html += `<div class="card mb8">
-      <div class="flex-between mb8">
-        <div class="card-title">Session ${s.id} — ${s.focus}</div>
-        <div class="font-mono font-xs text-dim">~${s.approxMin} min</div>
-      </div>`;
+    html += `<div class="card mb8"><div class="flex-between mb8"><div class="card-title">Session ${s.id} — ${s.focus}</div><div class="font-mono font-xs text-dim">~${s.approxMin} min</div></div>`;
     s.exercises.forEach(eid => {
-      const ex = EXERCISES[eid];
-      if (!ex) return;
-      const badgeMap = { 'weak-link': 'badge-teal', 'loaded-stretch': 'badge-purple', 'active': 'badge-coral', 'passive': 'badge-gray', 'technique': 'badge-amber' };
-      const labelMap = { 'weak-link': 'weak link', 'loaded-stretch': 'loaded', 'active': 'active', 'passive': 'passive', 'technique': 'technique' };
-      const sets_reps = ex.unit === 'reps' ? `${ex.sets}×${ex.reps}` : ex.unit === 'hold' ? `${ex.sets}×${ex.holdSec}s` : `${ex.sets}×${ex.reps} cycles`;
-      html += `<div class="flex gap8" style="margin-bottom:6px; align-items:center;">
-        <span class="badge ${badgeMap[ex.badge]}">${labelMap[ex.badge]}</span>
-        <span class="font-sm">${ex.name}</span>
-        <span class="font-mono font-xs text-dim" style="margin-left:auto">${sets_reps}</span>
-      </div>`;
+      const ex = EXERCISES[eid]; if (!ex) return;
+      const sr = ex.unit === 'reps' ? `${ex.sets}×${ex.reps}` : ex.unit === 'hold' ? `${ex.sets}×${ex.holdSec}s` : `${ex.sets}×${ex.reps} cycles`;
+      html += `<div class="flex gap8" style="margin-bottom:6px;align-items:center;"><span class="badge ${badgeMap[ex.badge]}">${labelMap[ex.badge]}</span><span class="font-sm" style="flex:1;">${ex.name}</span><span class="font-mono font-xs text-dim">${sr}</span></div>`;
     });
     html += `</div>`;
   });
-
-  html += `<div class="sec-label" style="padding:0; margin-top:16px;">Phase 1 complete when...</div>
-    <div class="card mb8">`;
+  html += `<div class="sec-label" style="padding:0;margin-top:16px;">Phase 1 complete when...</div><div class="card mb8">`;
   p.exitCriteria.forEach(c => {
-    html += `<div style="display:flex; gap:10px; padding:6px 0; border-bottom:1px solid var(--border); font-size:13px; color:var(--text2); line-height:1.6; align-items:flex-start;">
-      <span style="color:var(--text3); margin-top:2px; flex-shrink:0;">○</span>
-      <span>${c}</span>
-    </div>`;
+    html += `<div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--text2);line-height:1.6;align-items:flex-start;"><span style="color:var(--text3);margin-top:2px;flex-shrink:0;">○</span><span>${c}</span></div>`;
   });
   html += `</div>`;
-
   document.getElementById('preview-content').innerHTML = html;
 }
 
@@ -1058,24 +1303,39 @@ function renderHome() {
   }
   streakHtml += '</div>';
 
-  let html = `
-    <div class="stat-grid mb12">
-      <div class="stat-card">
-        <div class="stat-val">${streak}</div>
-        <div class="stat-label">Day streak</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val">${sessions.length}</div>
-        <div class="stat-label">Sessions done</div>
-      </div>
-    </div>
+  let html = ``;
 
+  // Deload check (every 12 sessions = ~4 weeks)
+  const shouldDeload = sessions.length > 0 && sessions.length % 12 === 0 && !state.program.deloadDismissedAt;
+  if (shouldDeload) {
+    html += `<div class="warn-box" style="cursor:pointer;" onclick="document.getElementById('deload-modal').classList.add('active')">🔄 <strong>Deload week suggested</strong> — ${sessions.length} sessions completed. Tap for details.</div>`;
+  }
+
+  // Plateau alerts
+  const plateaus = detectPlateaus(sessions);
+  plateaus.forEach(p => {
+    html += `<div style="background:rgba(240,184,64,0.1);border:1px solid rgba(240,184,64,0.3);border-radius:var(--radius-sm);padding:10px 12px;font-size:12px;color:var(--amber);margin:0 0 8px;line-height:1.6;">📊 <strong>Plateau — ${p.exerciseName}:</strong> No measurement change in last 3 sessions. Consider progressive underload.</div>`;
+  });
+
+  // Readiness score
+  const exitChecks = state.program.exitChecks || [];
+  const checksDone = exitChecks.filter(Boolean).length;
+  const totalChecks = state.program.exitCriteria.length;
+  const consistency = Math.min(sessions.length / 24, 1);
+  const readinessPct = Math.round(((checksDone / totalChecks) * 0.7 + consistency * 0.3) * 100);
+
+  html += `\n    <div class="stat-grid mb12">
+      <div class="stat-card"><div class="stat-val">${streak}</div><div class="stat-label">Day streak</div></div>
+      <div class="stat-card"><div class="stat-val">${sessions.length}</div><div class="stat-label">Sessions done</div></div>
+    </div>
     <div class="card mb12">
-      <div class="flex-between mb8">
-        <div class="card-title">This week</div>
-        ${streakHtml}
-      </div>
+      <div class="flex-between mb8"><div class="card-title">This week</div>${streakHtml}</div>
       <div class="card-sub">${lastSeven.length} of 3 sessions completed</div>
+    </div>
+    <div class="card mb12">
+      <div class="flex-between mb8"><div class="card-title">Phase 1 readiness</div><div class="font-mono font-xs text-accent">${readinessPct}%</div></div>
+      <div style="height:8px;background:var(--border);border-radius:4px;margin:8px 0;"><div style="height:100%;border-radius:4px;background:var(--accent);width:${readinessPct}%;transition:width 0.5s;"></div></div>
+      <div class="card-sub">${checksDone} of ${totalChecks} exit criteria met · ${sessions.length} sessions logged</div>
     </div>`;
 
   // Next session suggestion
@@ -1113,7 +1373,7 @@ function renderHome() {
       html += `<div class="history-item" onclick="showSessionLog('${s.id}')">
         <div style="flex:1">
           <div class="history-title">Session ${s.sessionType}</div>
-          <div class="history-meta">${dateStr} · ${s.exercises?.length || 0} exercises</div>
+          <div class="history-meta">${dateStr}${s.rpe ? ' · RPE ' + s.rpe + '/10' : ''} · ${s.exercises?.length || 0} exercises</div>
         </div>
         <div style="font-size:20px; color:var(--text3)">›</div>
       </div>`;
@@ -1122,6 +1382,62 @@ function renderHome() {
 
   html += `<div style="height:16px;"></div>`;
   document.getElementById('home-content').innerHTML = html;
+}
+
+function detectPlateaus(sessions) {
+  if (sessions.length < 3) return [];
+  const recent = sessions.slice(-3);
+  const exMap = {};
+  recent.forEach(s => (s.exercises || []).forEach(ex => {
+    if (!exMap[ex.id]) exMap[ex.id] = [];
+    exMap[ex.id].push(ex.measure);
+  }));
+  return Object.entries(exMap)
+    .filter(([, measures]) => measures.length >= 3 && measures[0] && measures[0] === measures[1] && measures[1] === measures[2])
+    .map(([id]) => ({ exerciseId: id, exerciseName: EXERCISES[id]?.name || id }));
+}
+
+function dismissDeload() {
+  state.program.deloadDismissedAt = Date.now();
+  saveState();
+  document.getElementById('deload-modal').classList.remove('active');
+  renderHome();
+}
+
+function showRPEModal() {
+  let html = '';
+  for (let i = 1; i <= 10; i++) {
+    html += `<div style="padding:12px 4px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--bg3);color:var(--text2);font-family:var(--mono);font-size:14px;cursor:pointer;text-align:center;transition:all 0.15s;" id="rpe-btn-${i}" onclick="selectRPE(${i})">${i}</div>`;
+  }
+  document.getElementById('rpe-grid').innerHTML = html;
+  selectedRPE = null;
+  document.getElementById('rpe-modal').classList.add('active');
+}
+
+function selectRPE(val) {
+  selectedRPE = val;
+  for (let i = 1; i <= 10; i++) {
+    const btn = document.getElementById(`rpe-btn-${i}`);
+    if (!btn) continue;
+    btn.style.borderColor = i === val ? 'var(--accent)' : 'var(--border2)';
+    btn.style.background = i === val ? 'rgba(200,240,96,0.12)' : 'var(--bg3)';
+    btn.style.color = i === val ? 'var(--accent)' : 'var(--text2)';
+  }
+}
+
+function submitRPE(rpe) {
+  document.getElementById('rpe-modal').classList.remove('active');
+  state.currentSession.rpe = rpe;
+  state.currentSession.id = Date.now().toString();
+  state.sessions = state.sessions || [];
+  state.sessions.push(state.currentSession);
+  state.currentSession = null;
+  saveState();
+  Object.values(inlineTimers).forEach(t => clearInterval(t.interval));
+  renderHome();
+  renderProgress();
+  gotoScreen('home', document.querySelector('.nav-btn'));
+  document.querySelectorAll('.nav-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
 }
 
 function toggleExitCheck(i) {
@@ -1245,6 +1561,15 @@ function confirmPresession() {
 // ACTIVE SESSION
 // ═══════════════════════════════════════════════════════
 
+function checkHorseSlideRetirement() {
+  const sessions = state.sessions || [];
+  if (sessions.length < 3) return false;
+  return sessions.slice(-3).every(s => {
+    const ex = (s.exercises || []).find(e => e.id === 'horse_stance_slides');
+    return ex && ex.measure && ex.measure.toLowerCase().includes('yes');
+  });
+}
+
 function startSession(sessionId, filteredExercises, equip) {
   const session = state.program.sessions.find(s => s.id === sessionId) || state.program.sessions[0];
   const exercises = filteredExercises || session.exercises.map(eid => EXERCISES[eid]).filter(Boolean);
@@ -1255,13 +1580,17 @@ function startSession(sessionId, filteredExercises, equip) {
     date: new Date().toISOString(),
     equipment: equip || 'dumbbells',
     exercises: [],
-    notes: ''
+    notes: '',
+    _exerciseList: exercises.map(e => e.id)
   };
 
   document.getElementById('session-title').textContent = `Session ${session.id} — ${session.focus}`;
   document.getElementById('session-meta').textContent = `${exercises.length} exercises · ~${totalMin} min`;
 
+  const retireNote = checkHorseSlideRetirement();
   let html = `<div class="warn-box" style="margin-top:4px;">Complete exercises in order. Rest 60–90 sec between sets. Tap any exercise to expand cues.</div>`;
+  html += `<div class="note-box">📸 Take a side-profile photo before you start — compare it in 8 weeks.</div>`;
+  if (retireNote) html += `<div class="note-box">💡 <strong>Horse Stance Slides:</strong> Alignment has felt automatic 3 sessions running. Consider removing this drill and using the time for extra horse stance squat sets.</div>`;
 
   exercises.forEach((ex, idx) => {
     if (!ex) return;
@@ -1329,6 +1658,8 @@ function startSession(sessionId, filteredExercises, equip) {
           ${setsHtml}
           <div class="ex-section">Measurement</div>
           <input class="form-input" type="text" id="ex${idx}_measure" placeholder="${ex.measureLabel}" style="font-size:13px;">
+          <div class="ex-section">Exercise notes</div>
+          <input class="form-input" type="text" id="ex${idx}_notes" placeholder="${ex.measureLabel.split('/')[0].trim()} — any cues, pain, left vs right?" style="font-size:12px;color:var(--text2)">
         </div>
       </div>`;
   });
@@ -1405,7 +1736,7 @@ function toggleEx(header) {
 
 function endSession() {
   if (!confirm('Finish this session and save your log?')) return;
-  const exerciseIds = state.currentSession._exerciseList || 
+  const exerciseIds = state.currentSession._exerciseList ||
     (state.program.sessions.find(s => s.id === state.currentSession.sessionType) || state.program.sessions[0]).exercises;
   const exercises = [];
 
@@ -1420,26 +1751,17 @@ function endSession() {
       sets.push({ set: s, reps, kg, done });
     }
     const measure = document.getElementById(`ex${idx}_measure`)?.value || '';
-    exercises.push({ id: eid, name: ex.name, sets, measure });
+    const notes = document.getElementById(`ex${idx}_notes`)?.value || '';
+    exercises.push({ id: eid, name: ex.name, sets, measure, notes });
   });
 
   const notes = document.getElementById('session-notes')?.value || '';
   state.currentSession.exercises = exercises;
   state.currentSession.notes = notes;
   delete state.currentSession._exerciseList;
-  state.currentSession.id = Date.now().toString();
-
-  state.sessions = state.sessions || [];
-  state.sessions.push(state.currentSession);
-  state.currentSession = null;
-  saveState();
 
   Object.values(inlineTimers).forEach(t => clearInterval(t.interval));
-
-  renderHome();
-  renderProgress();
-  gotoScreen('home', document.querySelector('.nav-btn'));
-  document.querySelectorAll('.nav-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+  showRPEModal();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1620,7 +1942,8 @@ function renderLibrary() {
     { id: 'dorsiflexion', label: 'Dorsiflexion' },
     { id: 'pike', label: 'Pike' },
     { id: 'pancake', label: 'Pancake' },
-    { id: 'sidesplit', label: 'Side Split' }
+    { id: 'sidesplit', label: 'Side Split' },
+    { id: 'shoulders', label: 'Shoulders' }
   ];
 
   let html = `
@@ -1788,10 +2111,12 @@ function renderSettings() {
   if (!user) {
     html = `
       <div class="sec-label" style="padding:0;">Your profile</div>
-      <div class="card mb12">
-        <div class="card-sub">No profile yet — complete onboarding first.</div>
-      </div>`;
+      <div class="card mb12"><div class="card-sub">No profile yet — complete onboarding first.</div></div>`;
   } else {
+    const avgRPE = sessions.filter(s => s.rpe).length
+      ? Math.round(sessions.filter(s => s.rpe).reduce((t, s) => t + s.rpe, 0) / sessions.filter(s => s.rpe).length * 10) / 10
+      : null;
+
     html += `
       <div class="sec-label" style="padding:0;">Your profile</div>
       <div class="card mb12">
@@ -1803,23 +2128,33 @@ function renderSettings() {
           <div class="badge badge-accent">Phase ${state.program?.phase || 1}</div>
         </div>
       </div>
-
       <div class="sec-label" style="padding:0;">Data</div>
       <div class="card mb12">
-        <div class="flex-between mb12">
-          <div class="fw700 font-sm">Total sessions logged</div>
-          <div class="font-mono font-xs text-accent">${sessions.length}</div>
-        </div>
-        <div class="flex-between">
-          <div class="fw700 font-sm">Storage used</div>
-          <div class="font-mono font-xs text-dim">${getStorageSize()}</div>
-        </div>
-      </div>
+        <div class="flex-between mb12"><div class="fw700 font-sm">Sessions logged</div><div class="font-mono font-xs text-accent">${sessions.length}</div></div>
+        <div class="flex-between mb12"><div class="fw700 font-sm">Avg RPE</div><div class="font-mono font-xs text-dim">${avgRPE !== null ? avgRPE + '/10' : '—'}</div></div>
+        <div class="flex-between"><div class="fw700 font-sm">Storage used</div><div class="font-mono font-xs text-dim">${getStorageSize()}</div></div>
+      </div>`;
 
+    if (state.program?.pecSkipped) {
+      html += `
+      <div class="sec-label" style="padding:0;">Pending assessments</div>
+      <div style="background:rgba(144,128,240,0.06);border:1px solid rgba(144,128,240,0.3);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;">
+        <div class="fw700 font-sm mb8">👥 Pec major length test</div>
+        <div class="card-sub mb12">Complete with a partner and update the result below.</div>
+        <select class="form-input" id="pec-retest" style="margin-bottom:10px;">
+          <option value="">Select result...</option>
+          <option value="tight">Feel a stretch — pec minor is tight</option>
+          <option value="normal">No stretch felt — normal range</option>
+        </select>
+        <button class="btn btn-secondary btn-sm" onclick="updatePecTest()">Update assessment</button>
+      </div>`;
+    }
+
+    html += `
       <div class="sec-label" style="padding:0;">Danger zone</div>
       <div class="card mb12">
         <div class="card-title mb8" style="color:var(--coral);">Reset app</div>
-        <div class="card-sub mb12">Clears all your data — profile, program, session logs, and progress. This cannot be undone.</div>
+        <div class="card-sub mb12">Clears all data — profile, program, session logs, and progress. Cannot be undone.</div>
         <button class="btn btn-danger btn-sm" onclick="confirmReset()">Reset everything</button>
       </div>`;
   }
@@ -1827,15 +2162,25 @@ function renderSettings() {
   html += `
     <div class="sec-label" style="padding:0;">About</div>
     <div class="card mb12">
-      <div class="flex-between mb8">
-        <div class="fw700 font-sm">FlexTrack</div>
-        <div class="font-mono font-xs text-dim">v1.0</div>
-      </div>
-      <div class="card-sub">Built around the Mobility & Flexibility Toolkit by Matt Smith. Program logic derived from course material on pike, pancake, and side split training.</div>
+      <div class="flex-between mb8"><div class="fw700 font-sm">FlexTrack</div><div class="font-mono font-xs text-dim">v2.0</div></div>
+      <div class="card-sub">Built around the Mobility & Flexibility Toolkit by Matt Smith. Program logic derived from course material on pike, pancake, side split, and shoulder training.</div>
     </div>
     <div style="height:16px;"></div>`;
 
   document.getElementById('settings-content').innerHTML = html;
+}
+
+function updatePecTest() {
+  const val = document.getElementById('pec-retest')?.value;
+  if (!val) { alert('Please select a result.'); return; }
+  state.user.assessAnswers.pec_test = val === 'tight'
+    ? 'Feel a definite stretch when shoulders are pressed flat'
+    : 'No stretch felt — shoulders press flat easily';
+  state.program.pecSkipped = false;
+  state.program.pecTight = val === 'tight';
+  saveState();
+  renderSettings();
+  alert('Assessment updated.');
 }
 
 function getStorageSize() {
@@ -1864,7 +2209,7 @@ function confirmReset() {
 }
 
 function resetApp() {
-  try { localStorage.removeItem('flextrack_state'); } catch(e) {}
+  try { localStorage.removeItem('flextrack_v2'); } catch(e) {}
   state = { user: null, program: null, sessions: [], currentSession: null };
   // Remove any stray modals
   document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
