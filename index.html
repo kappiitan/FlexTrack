@@ -268,6 +268,39 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
 </div>
 
 <!-- ═══════════════════════════════════════════
+     SCREEN: GOAL SETTING
+═══════════════════════════════════════════ -->
+<div id="screen-goals" class="screen">
+  <div class="app-header"><div><div class="app-logo">Your <span>Goals</span></div><div class="header-sub">STEP 1 OF 2 — BEFORE THE ASSESSMENT</div></div></div>
+  <div class="scroll-area px">
+    <div class="note-box" style="margin-top:4px;">This takes 2 minutes. Defining success before you start makes the training more meaningful and helps you stay consistent.</div>
+    <div class="sec-label" style="padding:0;">What does success look like?</div>
+    <div class="form-group">
+      <label class="form-label">Describe your goal in one sentence</label>
+      <textarea class="form-input form-textarea" id="goal-text" placeholder="e.g. I want to touch my toes in a pike, or achieve a full side split by summer" style="min-height:80px;"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Target date (optional)</label>
+      <input type="date" class="form-input" id="goal-date">
+    </div>
+    <div class="sec-label" style="padding:0;">What are you training flexibility for?</div>
+    <div class="form-group">
+      <div class="option-grid" id="sport-context-select" style="flex-direction:column;gap:8px;">
+        <div class="option-pill" data-val="general" onclick="selectSportContext(this)">🎯 General fitness / no specific sport</div>
+        <div class="option-pill" data-val="climbing" onclick="selectSportContext(this)">🧗 Rock climbing</div>
+        <div class="option-pill" data-val="dance" onclick="selectSportContext(this)">💃 Dance, circus or contemporary movement</div>
+        <div class="option-pill" data-val="martial_arts" onclick="selectSportContext(this)">🥋 Martial arts or combat sports</div>
+        <div class="option-pill" data-val="gymnastics" onclick="selectSportContext(this)">🤸 Gymnastics or acrobatics</div>
+        <div class="option-pill" data-val="other" onclick="selectSportContext(this)">⚡ Other sport or activity</div>
+      </div>
+    </div>
+    <div id="sport-context-note" style="display:none;" class="warn-box"></div>
+    <button class="btn btn-primary mt16" id="goals-next-btn" onclick="goalsNext()">Next — Start Assessment →</button>
+    <div style="height:32px;"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
      SCREEN: ASSESSMENT
 ═══════════════════════════════════════════ -->
 <div id="screen-assess" class="screen">
@@ -430,6 +463,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
         <div class="option-pill" data-val="dumbbells" onclick="selectPS('equip',this)">+ Dumbbells / KB</div>
         <div class="option-pill" data-val="gym" onclick="selectPS('equip',this)">Full gym</div>
       </div>
+      <div class="note-box" style="margin-top:8px;font-size:11px;">💡 <strong>Equipment tip:</strong> For home training, a threaded adjustable dumbbell loaded to 10–15 kg total is all you need. Microplates (0.5–1 kg increments) matter — especially for shoulder work and straight arm lifts.</div>
     </div>
 
     <div id="ps-exercise-preview" style="margin-bottom:16px;"></div>
@@ -613,7 +647,7 @@ const EXERCISES = {
     priority: 3,
     skills: ['sidesplit','combined'],
     prescription: '2–3 sets × 8 reps · Tempo 2-3-1-0 · 4–10 kg per knee · Bodyweight if no weights — longer hold',
-    how: ['Sit with your back flat against a wall','Pull both feet in toward groin as close as possible, heels touching','Place a dumbbell or kettlebell on each knee (on the knee itself)','Test unloaded range first — how far knees drop without hands','Select weight that takes you slightly past unloaded range only','Perform reps with tempo — focus on the bottom position','Final rep: hold 10–15 sec, try to relax the inner thigh','Note if left knee drops less than right — that is your imbalance'],
+    how: ['Sit with your back flat against a wall','Pull both feet in toward groin as close as possible, heels touching — feet should make contact from toes to heels','Place a dumbbell or kettlebell on each knee (on the knee itself — not the thigh or shin)','Test unloaded range first — how far knees drop with just glutes pulling them down (no hands)','Select weight that takes you slightly past that unloaded range only','Perform reps with tempo — focus on the bottom position','Final rep: hold 10–15 sec, actively relax the inner thigh','Note if left knee drops less than right — that is your imbalance','BLOCK MODIFICATION: if your calves already make full contact with the floor, sit on a firm block with a block of equal height under each foot — otherwise the exercise has no range to work in'],
     measureLabel: 'Weight used / left knee vs right knee drop difference', approxMin: 10
   },
   horse_stance_squats: {
@@ -735,7 +769,7 @@ const EXERCISES = {
     equipment: 'bodyweight', priority: 6,
     skills: ['sidesplit', 'combined'],
     prescription: '3 sets × 6 reps · Tempo 1-3-1-0 · Closed hip · Left first',
-    how: ['Kneel on one knee, working leg extended to the side. Left first','Keep chest high, slight anterior pelvic tilt throughout','Lift the extended leg away from the floor using hip abductors','Track height lifted using a stack of blocks as a target — aim higher each session','Closed hip variation transfers best to side split — use this first','Extend the leg to increase difficulty, bend to decrease it','Weakest side first, match reps exactly on stronger side'],
+    how: ['Kneel on one knee, working leg extended to the side. Left first','Keep chest high, slight anterior pelvic tilt throughout','Lift the extended leg away from the floor using hip abductors — squeeze the glutes hard to lift','CRITICAL: keep the foot inline with or slightly in front of the hip — never let it drift behind. If it goes behind the hip line, you are compensating and the hip flexor is no longer loaded correctly','Track height lifted using a stack of blocks as a target — aim higher each session','Closed hip variation transfers best to side split — use this first','Extend the leg to increase difficulty, bend to decrease it','Weakest side first, match reps exactly on stronger side'],
     measureLabel: 'Leg height reached / stack height (cm)', approxMin: 8
   },
   hanging_magnus: {
@@ -757,6 +791,16 @@ const EXERCISES = {
     prescription: '3 sets × 3 reps · 5 sec hold each · Start 0.5–3 kg · Slightly narrow straddle',
     how: ['Set up in pancake — use a slightly narrower straddle than usual for better leverage','Hold very light dumbbells or plates — start 0.5–1 kg per hand','Lift weights just off the floor with arms extended — only 5–8 cm off floor','Hold 5 sec. Think about reaching FORWARD not just up','Lower, rest briefly in the pancake, repeat','Progress to heavier weight as you get stronger at this position','Bridges the gap from head-to-floor to belly-to-floor'],
     measureLabel: 'Weight used / arms reaching forward or pulling upward?', approxMin: 8
+  },
+  over_straight_arm_lifts: {
+    id: 'over_straight_arm_lifts', name: 'Over Straight Arm Lifts',
+    badge: 'active', category: 'pancake',
+    sets: 3, reps: 3, holdSec: 5, tempo: null, unit: 'reps',
+    equipment: 'dumbbells', priority: 7,
+    skills: ['pancake'],
+    prescription: '3–4 sets × 3 reps · 5 sec hold · Start 0.5–1 kg · Contract-relax: 5s contract / 5s relax',
+    how: ['Set up in your deepest pancake position — chest-to-floor or belly-to-floor level required','Hold very light dumbbells — start 0.5–1 kg per hand (use microplates if available)','Lift weights off the floor with arms extended — only a few cm of clearance','Hold 5 sec reaching FORWARD. Then: try to push weights further toward the floor (isometric press)','CONTRACT (5 sec): press downward against the floor with full effort — nothing moves','RELAX (5 sec): release and try to lift slightly higher','The contract-relax cycle deepens the position over the set','Progress by adding weight in 0.5 kg increments only — this is a precision drill','Distinction from Straight Arm Lifts: you are already past the floor level, working the upper range of the pancake toward abs-to-floor'],
+    measureLabel: 'Weight used / height of lift off floor (cm)', approxMin: 8
   },
   powell_raises: {
     id: 'powell_raises', name: 'Powell Raises',
@@ -907,8 +951,8 @@ const ASSESS_QUESTIONS = {
     {
       id: 'pancake_reach', type: 'single',
       q: 'Seated straddle reach test',
-      test: 'Sit on the floor, open your legs as wide as comfortable. Reach both hands forward on the floor in front of you.',
-      hint: 'This directly selects your main pancake exercise.',
+      test: 'Sit on the floor, open your legs as wide as comfortable. Reach both hands forward on the floor in front of you as far as possible and hold 3 seconds.\n\nIf your head does not touch the floor — measure the angle: centre point is the top of your thigh/middle of your trunk. One line runs parallel to the floor, the other extends to the furthest point of your upper back. Less than 90° lean: the line points toward your feet. More than 90°: the line points toward your head.\n\nIf your head touches the floor — use touchpoints instead: Forehead → Nose → Chin → Chest → Abs.',
+      hint: 'This directly selects your main pancake exercise. For Android use AngleUs, for iOS use Angle Meter 360 to measure from a screenshot.',
       options: ['Fall backward without actively engaging core','Hands reach hip level only','Hands reach to about knee/thigh level on the floor','Hands pass the knee line','Head can touch the floor','Chest can touch the floor','Belly to floor']
     },
     {
@@ -920,18 +964,18 @@ const ASSESS_QUESTIONS = {
     },
     {
       id: 'pancake_tilt', type: 'single',
-      q: 'Pelvic tilt test in straddle',
-      test: 'Sit in your straddle. Try to push your chest forward and arch your lower back — like sticking your bum backward while sitting.',
-      hint: 'If you fall backward, hip flexors need extra work before seated pancake drilling.',
-      options: ['Cannot do it — I fall backward immediately','Can hold briefly with a lot of effort','Can maintain it fairly easily']
+      q: 'Pelvic tilt and tailor\'s pose test',
+      test: 'Part 1 — Pelvic tilt: Sit in your straddle, try to push your chest forward and arch your lower back — sticking your bum backwards while sitting. Note if you can hold this or fall backward.\n\nPart 2 — Tailor\'s pose: Sit with your back flat against a wall, feet pulled in with heels touching. Pull knees down and apart using your glutes — do NOT push with your hands or press on your thighs. Hold 15 seconds. Note if your calves make full contact with the floor.',
+      hint: 'The calf-to-floor question changes which exercise you start with. If your legs already touch the floor, you will need to sit on a block with feet elevated to get the right stimulus.',
+      options: ['Cannot hold pelvic tilt — fall backward immediately','Can hold pelvic tilt briefly — calves do NOT touch floor in tailor\'s pose','Can hold pelvic tilt fairly easily — calves do NOT touch floor','Calves make full contact with floor in tailor\'s pose']
     }
   ],
   sidesplit: [
     {
       id: 'split_width', type: 'single',
       q: 'Standing side opening test',
-      test: 'Stand and slowly open your legs to the side as far as comfortable. Hold briefly. Estimate the angle — 90° = a right angle between your legs.',
-      hint: '',
+      test: 'Stand and slowly open your legs to the side as far as comfortable. Hold for 30 seconds.\n\nCorrect triangle position: hips sitting BACK behind your feet (not directly over them), lower back arched, chest high and looking forwards, knees pushing outward over toes, ankles inline with hands if supported. This position is mandatory — opening wider with poor alignment gives a false reading.',
+      hint: 'Estimate the angle — 90° = a right angle between your legs. Use a supported version (hands on chair) if needed to hold the position correctly.',
       options: ['Less than 60°','Around 60–80°','Around 90°','Around 120°','Around 150° or more']
     },
     {
@@ -947,6 +991,13 @@ const ASSESS_QUESTIONS = {
       test: 'Try kicking each leg gently to the side one at a time. Compare the feel and range.',
       hint: 'A noticeable difference will affect your training.',
       options: ['Left feels noticeably stiffer or weaker','Right feels noticeably stiffer or weaker','Both feel very similar']
+    },
+    {
+      id: 'split_potential', type: 'single',
+      q: 'Side split potential test (optional but recommended)',
+      test: 'Lie face down on the floor. Keeping your pelvis flat on the ground, slide one leg out to the side as far as possible without the hip lifting. Measure or estimate the angle. Repeat the other side. This tests your anatomical range — what your hip socket allows — separate from muscle flexibility.',
+      hint: 'If you feel a sharp bony block at the hip joint (not muscle tightness) before 90°, your hip anatomy may limit your maximum side split. This does not mean you cannot improve — it means triangle alignment is especially critical for you.',
+      options: ['Sharp bony block before 90° on one or both sides','Bony feeling at 90°–120° — possible anatomical limit','Muscle tightness only — no bony sensation','Not sure / could not feel the difference clearly']
     }
   ],
   shoulders: [
@@ -966,18 +1017,18 @@ const ASSESS_QUESTIONS = {
     },
     {
       id: 'lat_test', type: 'single',
-      q: 'Lat length test',
-      test: 'Lie on your back. Pull both knees into your chest, curling your lower back. KEEPING this curled position, try to lower both arms overhead at shoulder width.',
-      hint: 'Compare to lying flat. If curling improves your overhead range, lats are a limiter.',
-      options: ['Significant restriction — arms stop well before floor','Arms reach about halfway down','Arms get most of the way down','Arms reach the floor when back is curled']
+      q: 'Lat length test — two positions',
+      test: 'Lie on your back. Position 1: pull both knees to your chest, curl your lower back, then lower both arms overhead at shoulder width and hold. Screenshot or note the angle. Position 2: put feet flat on the floor (hook lying), keep back flat, and lower both arms overhead again. Compare the two angles.',
+      hint: 'If the angle is better in Position 1 (knees to chest), lats are restricting you. If both positions give the same angle, lats are not the limiter — something else is.',
+      options: ['Arms stop well before floor in both positions — not lat-related','Noticeably better in Position 1 (knees to chest) — lats are a limiter','Slightly better in Position 1 — mild lat restriction','Same angle in both positions — lats are not the issue']
     },
     {
       id: 'pec_test', type: 'single',
-      q: 'Pec minor test',
-      test: 'Partner required: Lie on your back, arms slightly out from sides. Partner gently presses both shoulders toward the floor at the same time.',
-      hint: 'If you feel a stretch when shoulders are pressed flat, pec minor is tight.',
+      q: 'Pec major test (partner required)',
+      test: 'Stand with thumbs pointing backwards and arms raised to ear height. Partner stands behind you and pulls both arms backwards simultaneously, holding for 3 seconds. Partner looks from directly above to estimate the angle — arms in a straight line = 0°, anything behind the shoulder line is positive.',
+      hint: 'Tight pec major = cannot pass 10° behind the shoulder line. Optimal range = 45° behind. Compare to your external rotation result — whichever is further from optimal is your priority.',
       partner: true,
-      options: ['Skip — no partner available right now','Feel a definite stretch when shoulders are pressed flat','No stretch felt — shoulders press flat easily']
+      options: ['Skip — no partner available right now','Cannot pass the line of the shoulders (under 10°) — very tight','Reach 10–30° behind the shoulder line','Reach 30–44° behind the shoulder line','45° or more behind — full range']
     },
     {
       id: 'shoulder_symptoms', type: 'multi',
@@ -992,10 +1043,10 @@ const ASSESS_QUESTIONS = {
 const COMMON_QUESTIONS = [
   {
     id: 'training_days', type: 'single',
-    q: 'How many days per week can you realistically train?',
-    test: 'Be honest — 3 consistent sessions beats 5 inconsistent ones.',
-    hint: '',
-    options: ['2 days per week','3 days per week','4–5 days per week']
+    q: 'How is your recovery typically between hard sessions?',
+    test: 'Think about how you feel 48 hours after a tough training session — energy levels, muscle soreness, sleep quality, life stress.',
+    hint: 'This sets your starting training frequency. You can always adjust it as you learn how your body responds.',
+    options: ['Poor — often still sore or fatigued after 2 days','Average — usually recovered within 3–5 days','Superior — recovered fully within 2–3 days, sleep and stress well managed']
   },
   {
     id: 'equipment', type: 'multi',
@@ -1046,7 +1097,7 @@ function loadState() {
 // ONBOARDING
 // ═══════════════════════════════════════════════════════
 
-document.querySelectorAll('.option-pill').forEach(p => {
+document.querySelectorAll('#ob-skill-select .option-pill').forEach(p => {
   p.addEventListener('click', () => {
     document.querySelectorAll('#ob-skill-select .option-pill').forEach(x => x.classList.remove('selected'));
     p.classList.add('selected');
@@ -1058,12 +1109,43 @@ function startAssessment() {
   const name = document.getElementById('ob-name').value.trim();
   if (!name) { alert('Please enter your name.'); return; }
   if (!selectedSkill) { alert('Please select a skill to train.'); return; }
-  state.user = { name, skill: selectedSkill, assessAnswers: {} };
+  state.user = { name, skill: selectedSkill, assessAnswers: {}, goal: null, sportContext: null };
+  showScreen('goals');
+}
+
+let selectedSportContext = null;
+
+function selectSportContext(el) {
+  document.querySelectorAll('#sport-context-select .option-pill').forEach(p => p.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedSportContext = el.dataset.val;
+  const noteEl = document.getElementById('sport-context-note');
+  const notes = {
+    climbing: '🧗 <strong>Climbing note:</strong> Climbers typically have strong active ranges but struggle to relax passively. Pike and pancake are common weak points. Your program will emphasise passive and contract-relax work alongside active holds.',
+    dance: '💃 <strong>Dance/circus note:</strong> Your program will prioritise active end-range control alongside flexibility — the performance split between passive and active range matters most for your application.',
+    martial_arts: '🥋 <strong>Martial arts note:</strong> High kick range requires both flexibility and active strength at end range. Kneeling tilt and adductor flyes will be emphasised for functional transfer.',
+    gymnastics: '🤸 <strong>Gymnastics note:</strong> Active flexibility is your priority. Passive range is secondary — the app will flag where your active range significantly lags your passive range.',
+    general: null,
+    other: null
+  };
+  const msg = notes[selectedSportContext];
+  if (msg) { noteEl.innerHTML = msg; noteEl.style.display = 'block'; }
+  else { noteEl.style.display = 'none'; }
+}
+
+function goalsNext() {
+  if (!selectedSportContext) { alert('Please select what you are training flexibility for.'); return; }
+  const goalText = document.getElementById('goal-text').value.trim();
+  const goalDate = document.getElementById('goal-date').value;
+  state.user.goal = goalText || null;
+  state.user.goalDate = goalDate || null;
+  state.user.sportContext = selectedSportContext;
   assessAnswers = {};
   assessStep = 0;
-  const skillQuestions = selectedSkill === 'combined'
+  const skill = state.user.skill;
+  const skillQuestions = skill === 'combined'
     ? [...(ASSESS_QUESTIONS['pike'] || []), ...(ASSESS_QUESTIONS['sidesplit'] || []), ...(ASSESS_QUESTIONS['pancake'] || [])]
-    : (ASSESS_QUESTIONS[selectedSkill] || []);
+    : (ASSESS_QUESTIONS[skill] || []);
   assessQuestions = [...skillQuestions, ...COMMON_QUESTIONS];
   renderAssessStep();
   showScreen('assess');
@@ -1142,18 +1224,60 @@ function generateProgram() {
   state.program.leftWeaker = ans.left_right === 'Left feels noticeably stiffer or weaker';
   state.program.rightWeaker = ans.left_right === 'Right feels noticeably stiffer or weaker';
   state.program.needsPelvicTiltWork = ans.pancake_tilt && ans.pancake_tilt.includes('fall backward');
+  state.program.calvesFloor = ans.pancake_tilt && ans.pancake_tilt.includes('full contact');
   state.program.bonyRestriction = Array.isArray(ans.split_feeling) && ans.split_feeling.some(s => s.includes('bony'));
-  state.program.latTight = ans.lat_test && !ans.lat_test.includes('floor');
+  state.program.anatomicalLimit = ans.split_potential && ans.split_potential.includes('bony') && ans.split_potential.includes('before 90');
+  // Recovery-based frequency
+  const rec = ans.training_days || '';
+  state.program.recoveryFrequency = rec.includes('Poor') ? '6–7 days between sessions'
+    : rec.includes('Superior') ? '2–3 days between sessions'
+    : '3–5 days between sessions';
+  state.program.latTight = ans.lat_test && ans.lat_test.includes('limiter');
   state.program.extRotLimited = ans.ext_rotation_test && (ans.ext_rotation_test.includes('Cannot') || ans.ext_rotation_test.includes('horizontal (0'));
   state.program.pecSkipped = ans.pec_test === 'Skip — no partner available right now';
-  state.program.pecTight = ans.pec_test && ans.pec_test.includes('stretch');
+  state.program.pecTight = ans.pec_test && (ans.pec_test.includes('under 10') || ans.pec_test.includes('10–30'));
 
-  // Pancake depth-based drill unlock
+  // Pancake depth-based drill selection (course rule — page 60)
+  // For standalone pancake: unlock straight arm lifts if head-to-floor
+  // For combined: replace final pancake drill based on forward lean angle
   if (skill === 'pancake' || skill === 'combined') {
     const reach = ans.pancake_reach || '';
-    if (reach.includes('Head') || reach.includes('Chest') || reach.includes('Belly')) {
-      if (!state.program.sessions[0].exercises.includes('straight_arm_lifts')) {
+    const headToFloor = reach.includes('Head') || reach.includes('Chest') || reach.includes('Belly');
+    const moreThan45 = reach.includes('Hands pass') || reach.includes('knee/thigh');
+    const lessThan45 = reach.includes('hip level') || reach.includes('fall backward');
+
+    if (skill === 'pancake') {
+      // Standalone pancake — unlock straight arm lifts if head reaches floor
+      if (headToFloor && !state.program.sessions[0].exercises.includes('straight_arm_lifts')) {
         state.program.sessions[0].exercises.splice(-2, 0, 'straight_arm_lifts');
+      }
+      // Unlock over straight arm lifts if chest or belly to floor
+      const chestOrBelly = reach.includes('Chest') || reach.includes('Belly');
+      if (chestOrBelly && !state.program.sessions[0].exercises.includes('over_straight_arm_lifts')) {
+        state.program.sessions[0].exercises.splice(-1, 0, 'over_straight_arm_lifts');
+      }
+    }
+
+    if (skill === 'combined') {
+      // Combined session: replace final pancake drill per the course's exact rule
+      // More than 45° lean → Standing Pancake Hang (pancake_hang_pir)
+      // Less than 45° lean → Round Back Good Morning (pancake_good_morning)
+      // Head to floor → Straight Arm Lifts
+      const exs = state.program.sessions[0].exercises;
+      // Remove existing pancake end drills to re-insert correct one
+      ['pancake_hang_pir','pancake_good_morning','straight_arm_lifts'].forEach(id => {
+        const i = exs.indexOf(id);
+        if (i > -1) exs.splice(i, 1);
+      });
+      if (headToFloor) {
+        exs.push('straight_arm_lifts');
+        state.program.combinedPancakeDrill = 'Straight Arm Lifts (head-to-floor level)';
+      } else if (lessThan45) {
+        exs.push('pancake_hang_pir');
+        state.program.combinedPancakeDrill = 'Standing Pancake Hang (less than 45° forward lean)';
+      } else {
+        exs.push('pancake_good_morning');
+        state.program.combinedPancakeDrill = 'Round Back Good Morning (more than 45° forward lean)';
       }
     }
   }
@@ -1169,10 +1293,17 @@ function renderLimiterSummary() {
   if (p.leftWeaker) limiters.push({ icon: '↔', label: 'Left side weaker/stiffer', desc: 'All unilateral work starts left. Right side matches left only — never exceeds it.', action: 'Left-first rule applied to all single-leg exercises' });
   if (p.rightWeaker) limiters.push({ icon: '↔', label: 'Right side weaker/stiffer', desc: 'All unilateral work starts right. Left side matches right only.', action: 'Right-first rule applied' });
   if (p.needsPelvicTiltWork) limiters.push({ icon: '↻', label: 'Hip flexor/pelvic tilt weakness', desc: 'You fall backward in the straddle — hip flexors cannot yet create anterior pelvic tilt against gravity. Standing pancake hang is the priority exercise before any seated pancake work.', action: 'Standing pancake hang prioritised above all seated work' });
+  if (p.combinedPancakeDrill) limiters.push({ icon: '🥞', label: 'Combined session pancake drill selected', desc: `Based on your pancake reach assessment, your pancake drill for the combined session is: ${p.combinedPancakeDrill}. This follows the course's drill selection rule.`, action: 'Pancake drill auto-selected from assessment' });
+  if (p.calvesFloor) limiters.push({ icon: '🧱', label: "Tailor's pose: calves touch floor", desc: "Your calves already make full contact with the floor in tailor's pose. You need to sit on a block with your feet elevated on an equal-height block to get the correct stimulus — otherwise the exercise has no effect.", action: "Block setup required for tailor's pose" });
   if (p.bonyRestriction) limiters.push({ icon: '🦴', label: 'Hip joint restriction detected', desc: 'You feel a bony/jamming sensation. Triangle alignment is especially critical — hips back, arch maintained at all times.', action: 'Triangle alignment cues emphasised throughout' });
+  if (p.anatomicalLimit) limiters.push({ icon: '🔬', label: 'Possible anatomical side split limit', desc: 'Sharp bony block before 90° on one or both sides. Your hip socket may limit your maximum range. This does not stop progress — but triangle alignment is non-negotiable and you may plateau earlier than average. Progressive underload will be your main tool.', action: 'Triangle alignment critical — progressive underload prioritised' });
+  // Sport context note
+  const sportNotes = { climbing: 'Climbing background detected — passive and contract-relax work is emphasised. Pike and pancake flagged as typical weak points.', dance: 'Dance/circus background — active end-range control is emphasised alongside passive flexibility.', martial_arts: 'Martial arts background — kneeling tilt and adductor flyes are prioritised for functional kick range.', gymnastics: 'Gymnastics background — active flexibility gaps will be flagged throughout.' };
+  const sportNote = sportNotes[state.user.sportContext];
+  if (sportNote) limiters.push({ icon: '🏋', label: 'Sport-specific adjustments active', desc: sportNote, action: 'Program emphasis adjusted for your sport' });
   if (p.latTight) limiters.push({ icon: '💪', label: 'Lat tightness limiting overhead', desc: 'Lats are restricting your shoulder flexion range. Lat-specific work is prioritised in shoulder sessions.', action: 'Lat work prioritised' });
   if (p.extRotLimited) limiters.push({ icon: '🔄', label: 'External rotation restriction', desc: 'Limited external rotation range detected. Contract-relax work prioritised before strength exercises.', action: 'Ext rotation CR added before strength work' });
-  if (p.pecSkipped) limiters.push({ icon: '👥', label: 'Pec major test skipped', desc: 'Partner test skipped. Pec exercises included as standard until retested.', action: 'Retest in Settings when a partner is available' });
+  if (p.pecSkipped) limiters.push({ icon: '👥', label: 'Pec major test skipped', desc: 'Partner test skipped. Pec exercises included as standard. Retest: stand with thumbs back, arms at ear height, partner pulls both arms backwards and estimates angle from above. Optimal = 45° behind shoulder line.', action: 'Retest in Settings when a partner is available' });
 
   let html = `<div class="note-box" style="margin-top:4px;">Based on your assessment — review these before your first session.</div>`;
   if (limiters.length) {
@@ -1198,7 +1329,8 @@ function renderProgramPreview() {
   const badgeMap = { 'weak-link': 'badge-teal', 'loaded-stretch': 'badge-purple', 'active': 'badge-coral', 'passive': 'badge-gray', 'technique': 'badge-amber' };
   const labelMap = { 'weak-link': 'weak link', 'loaded-stretch': 'loaded', 'active': 'active', 'passive': 'passive', 'technique': 'technique' };
 
-  let html = `<div class="card mb12"><div class="flex-between mb8"><div class="card-title">${p.skillLabel} — Phase 1</div><div class="badge badge-accent">Generated</div></div><div class="card-sub">${p.sessions[0].exercises.length} exercises · ~${p.sessions[0].approxMin} min · 3× per week</div></div>`;
+  let html = `<div class="card mb12"><div class="flex-between mb8"><div class="card-title">${p.skillLabel} — Phase 1</div><div class="badge badge-accent">Generated</div></div><div class="card-sub">${p.sessions[0].exercises.length} exercises · ~${p.sessions[0].approxMin} min</div></div>
+  <div class="warn-box" style="margin-bottom:12px;"><strong>Training frequency:</strong> Start once every 5 days. Only increase frequency if you are improving each session and recovering well between them.<br><span style="color:var(--text3);">Poor recovery → 6–7 days rest · Average → 3–5 days · Superior → 2–3 days</span></div>`;
   html += `<div class="sec-label" style="padding:0;">Session overview</div>`;
   p.sessions.forEach(s => {
     html += `<div class="card mb8"><div class="flex-between mb8"><div class="card-title">Session ${s.id} — ${s.focus}</div><div class="font-mono font-xs text-dim">~${s.approxMin} min</div></div>`;
@@ -1237,7 +1369,12 @@ function renderHome() {
   document.getElementById('home-greeting').innerHTML = `Hi, <span>${name}</span>`;
   document.getElementById('home-skill-badge').textContent = state.program.skillLabel;
 
-  const sessions = state.sessions || [];
+  // Goal display
+  let html = '';
+  if (state.user.goal) {
+    const goalDate = state.user.goalDate ? ` · ${new Date(state.user.goalDate).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'})}` : '';
+    html += `<div class="note-box" style="margin-top:4px;">🎯 <strong>Your goal:</strong> ${state.user.goal}${goalDate}</div>`;
+  }
   const lastSeven = sessions.filter(s => {
     const d = new Date(s.date);
     const now = new Date();
@@ -1258,7 +1395,6 @@ function renderHome() {
   }
   streakHtml += '</div>';
 
-  let html = ``;
 
   // Deload check (every 12 sessions = ~4 weeks)
   const shouldDeload = sessions.length > 0 && sessions.length % 12 === 0 && !state.program.deloadDismissedAt;
@@ -1269,7 +1405,14 @@ function renderHome() {
   // Plateau alerts
   const plateaus = detectPlateaus(sessions);
   plateaus.forEach(p => {
-    html += `<div style="background:rgba(240,184,64,0.1);border:1px solid rgba(240,184,64,0.3);border-radius:var(--radius-sm);padding:10px 12px;font-size:12px;color:var(--amber);margin:0 0 8px;line-height:1.6;">📊 <strong>Plateau — ${p.exerciseName}:</strong> No measurement change in last 3 sessions. Consider progressive underload.</div>`;
+    html += `<div style="background:rgba(240,184,64,0.1);border:1px solid rgba(240,184,64,0.3);border-radius:var(--radius-sm);padding:12px;font-size:12px;color:var(--amber);margin:0 0 8px;line-height:1.8;">
+      📊 <strong>Plateau — ${p.exerciseName}</strong><br>
+      No measurement change in last 3 sessions. Work through these steps in order:<br>
+      <span style="color:var(--text2);">1. <strong>Increase range of motion</strong> — try to go slightly deeper. If you can, do it.<br>
+      2. <strong>Increase TUT</strong> — add 2–3 reps (loaded) or 10–15s (passive hold). Only if range is stuck.<br>
+      3. <strong>Add a set</strong> — go from 3 sets to 4 sets. Only if range and TUT are both stuck.<br>
+      4. <strong>Check recovery</strong> — sleep, nutrition, stress, other training load. If any are poor, address those first before changing the programme.</span>
+    </div>`;
   });
 
   // Readiness score
@@ -1291,6 +1434,7 @@ function renderHome() {
       <div class="flex-between mb8"><div class="card-title">Phase 1 readiness</div><div class="font-mono font-xs text-accent">${readinessPct}%</div></div>
       <div style="height:8px;background:var(--border);border-radius:4px;margin:8px 0;"><div style="height:100%;border-radius:4px;background:var(--accent);width:${readinessPct}%;transition:width 0.5s;"></div></div>
       <div class="card-sub">${checksDone} of ${totalChecks} exit criteria met · ${sessions.length} sessions logged</div>
+      <div class="font-mono font-xs text-dim" style="margin-top:6px;">Phase 1 typically takes 4–6 weeks · ${state.program.recoveryFrequency || '3–5 days between sessions'}</div>
     </div>`;
 
   // Next session suggestion
@@ -1543,8 +1687,19 @@ function startSession(sessionId, filteredExercises, equip) {
   document.getElementById('session-meta').textContent = `${exercises.length} exercises · ~${totalMin} min`;
 
   const retireNote = checkHorseSlideRetirement();
+
+  // Return-from-break detection
+  const allSessions = state.sessions || [];
+  let breakWarning = false;
+  if (allSessions.length > 0) {
+    const lastDate = new Date(allSessions[allSessions.length - 1].date);
+    const daysSince = Math.floor((new Date() - lastDate) / (1000 * 60 * 60 * 24));
+    if (daysSince >= 14) breakWarning = daysSince;
+  }
+
   let html = `<div class="warn-box" style="margin-top:4px;">Complete exercises in order. Rest 60–90 sec between sets. Tap any exercise to expand cues.</div>`;
   html += `<div class="note-box">📸 Take a side-profile photo before you start — compare it in 8 weeks.</div>`;
+  if (breakWarning) html += `<div style="background:rgba(240,96,80,0.08);border:1px solid rgba(240,96,80,0.3);border-radius:var(--radius-sm);padding:12px 14px;font-size:12px;color:var(--text2);line-height:1.7;margin:8px 0;">⚠️ <strong>Welcome back — ${breakWarning} days since your last session.</strong> Do not train to where you were. Intermediate and advanced trainees are most likely to injure themselves by assuming they can access their previous range. Start conservatively — reduce weight by 20–30% and treat this as a re-orientation session.</div>`;
   if (retireNote) html += `<div class="note-box">💡 <strong>Horse Stance Slides:</strong> Alignment has felt automatic 3 sessions running. Consider removing this drill and using the time for extra horse stance squat sets.</div>`;
 
   exercises.forEach((ex, idx) => {
@@ -1611,7 +1766,7 @@ function startSession(sessionId, filteredExercises, equip) {
           </div>
           <div class="ex-section">Log sets</div>
           ${setsHtml}
-          <div class="ex-section">Measurement</div>
+          <div class="ex-section">Measurement <span style="color:var(--text3);font-size:9px;letter-spacing:0.04em;">— FIRST SET ONLY</span></div>
           <input class="form-input" type="text" id="ex${idx}_measure" placeholder="${ex.measureLabel}" style="font-size:13px;">
           <div class="ex-section">Exercise notes</div>
           <input class="form-input" type="text" id="ex${idx}_notes" placeholder="${ex.measureLabel.split('/')[0].trim()} — any cues, pain, left vs right?" style="font-size:12px;color:var(--text2)">
@@ -1787,7 +1942,7 @@ function renderProgress() {
     const latestKg = (latest.sets || []).find(s => s.kg)?.kg;
     const latestReps = (latest.sets || []).find(s => s.reps)?.reps;
 
-    html += `<div class="card card-sm mb8" onclick="showExHistory('${eid}', ${JSON.stringify(logs).replace(/"/g,'&quot;')})">
+    html += `<div class="card card-sm mb8" onclick="showExHistory('${eid}', ${JSON.stringify(logs).replace(/"/g,'\u0022')})">
       <div class="flex-between mb4">
         <div class="fw700 font-sm">${ex.name}</div>
         <div class="font-mono font-xs text-dim">${logs.length}× logged</div>
@@ -1964,6 +2119,38 @@ function renderLibrary() {
     <div class="ex-card">
       <div class="ex-header" onclick="toggleEx(this)">
         <div class="ex-num" style="background:transparent; border:1px solid var(--border);">?</div>
+        <div class="ex-info"><div class="ex-name">How to progress session to session</div><div class="ex-meta">4-step hierarchy — work through in order</div></div>
+        <span class="ex-chevron">▼</span>
+      </div>
+      <div class="ex-body">
+        <div class="ex-text mb8">Always try in this order. Do not skip to step 2 if step 1 is still available.</div>
+        <div class="note-box" style="margin-bottom:8px;"><strong>1. Increase range of motion</strong> — go slightly deeper than last session. If you can do this and still meet the reps, tempo and rest, always do it first.</div>
+        <div class="note-box" style="margin-bottom:8px;background:rgba(144,128,240,0.06);border-color:rgba(144,128,240,0.3);"><strong>2. Increase TUT (time under tension)</strong> — only when range is stuck.<br>
+        • <strong>Passive stretches:</strong> add 10–15s per session up to 30s over starting hold. e.g. 90s → 100s → 110s → 120s.<br>
+        • <strong>Loaded stretches:</strong> add 2–3 reps per session up to double starting reps. e.g. 8 → 11 → 14 → 16. Then add iso holds in 5–10s increments on last rep up to 30s.<br>
+        • <strong>Isometric holds:</strong> add 5–10s in ~50% increments. e.g. 40s → 50s → 55s → 60s.<br>
+        • <strong>Active lifts:</strong> add 2–3 reps up to double. e.g. 6 → 8 → 10 → 12. Then add 3–5s iso hold on last rep up to 15s.</div>
+        <div class="note-box" style="margin-bottom:8px;background:rgba(64,200,144,0.06);border-color:rgba(64,200,144,0.3);"><strong>3. Add a set</strong> — only when range and TUT are both stuck. Add 1 set per 2 sessions. e.g. 3 → 4 → 5 sets.</div>
+        <div class="note-box" style="background:rgba(240,96,80,0.06);border-color:rgba(240,96,80,0.3);"><strong>4. Check recovery</strong> — if none of the above are moving, look at sleep, nutrition, stress, and other training load before changing the programme.</div>
+      </div>
+    </div>
+
+    <div class="ex-card">
+      <div class="ex-header" onclick="toggleEx(this)">
+        <div class="ex-num" style="background:transparent; border:1px solid var(--border);">?</div>
+        <div class="ex-info"><div class="ex-name">What to track and when</div><div class="ex-meta">Track the first set only</div></div>
+        <span class="ex-chevron">▼</span>
+      </div>
+      <div class="ex-body">
+        <div class="ex-text mb8">Track measurements from the <strong>first set only</strong> — not every set. The first set gives the most accurate and consistent reading of your current range. Later sets are affected by fatigue and warm-up.</div>
+        <div class="note-box">For loaded exercises: note the weight and reps from set 1. For hold-based exercises: note the depth or distance reached at the start of set 1. For active lifts: note the height or hand position on set 1.</div>
+        <div class="ex-text mb8">Use the same reference points every session — a marker on the floor, a book stack, a tape measure. The number matters less than the consistency of how you measure it.</div>
+      </div>
+    </div>
+
+    <div class="ex-card">
+      <div class="ex-header" onclick="toggleEx(this)">
+        <div class="ex-num" style="background:transparent; border:1px solid var(--border);">?</div>
         <div class="ex-info"><div class="ex-name">Anterior pelvic tilt</div><div class="ex-meta">The key cue throughout this program</div></div>
         <span class="ex-chevron">▼</span>
       </div>
@@ -1980,8 +2167,20 @@ function renderLibrary() {
         <span class="ex-chevron">▼</span>
       </div>
       <div class="ex-body">
-        <div class="ex-text mb8">When progress stalls — reduce weight each session while maintaining the same depth. Example for Tailor's Pose stuck at 8 kg:</div>
-        <div class="note-box">Week 1: 8 kg → Week 2: 6 kg → Week 3: 4 kg → Week 4: bodyweight → Week 5: ramp back to 8 kg and push new depth. This improves your ability to reach the range without external help.</div>
+        <div class="ex-text mb8">When progress stalls despite working through the 4-step hierarchy — drop weight each session while maintaining the same depth. Then ramp back up.</div>
+        <div class="note-box">Example for Tailor's Pose stuck at 8 kg:<br>Week 1: 8 kg → Week 2: 6 kg → Week 3: 4 kg → Week 4: bodyweight → ramp back to 8 kg pushing new depth.<br>The goal is to train your nervous system to access the range without the external load, then use the load to push past the old limit.</div>
+      </div>
+    </div>
+
+    <div class="ex-card">
+      <div class="ex-header" onclick="toggleEx(this)">
+        <div class="ex-num" style="background:transparent; border:1px solid var(--border);">?</div>
+        <div class="ex-info"><div class="ex-name">Left/right imbalance rule</div><div class="ex-meta">How to handle unilateral differences</div></div>
+        <span class="ex-chevron">▼</span>
+      </div>
+      <div class="ex-body">
+        <div class="ex-text mb8">Always start unilateral exercises on the weaker or stiffer side. The stronger side matches the weaker side's reps and range exactly — never exceeds it.</div>
+        <div class="note-box">If the imbalance persists after 3 weeks: add one extra set to the weaker side only. Never let the stronger side pull further ahead by doing more. The goal is symmetry, not maximising the strong side.</div>
       </div>
     </div>
 
@@ -1994,6 +2193,7 @@ function renderLibrary() {
       <div class="ex-body">
         <div class="ex-text mb8"><strong style="color:var(--teal)">Push through:</strong> deep stretch sensation, hip flexor cramping in active lifts, muscle fatigue, general discomfort from end-range loading.</div>
         <div class="ex-text"><strong style="color:var(--coral)">Stop immediately:</strong> sharp pain inside the hip joint, shooting pain down a limb, sharp knee pain, any pain that worsens rep by rep.</div>
+        <div class="note-box" style="margin-top:8px;background:rgba(240,96,80,0.06);border-color:rgba(240,96,80,0.3);">Intermediate and advanced trainees are more likely to injure themselves than beginners — because they assume they can access ranges they achieved previously. Do not force positions on bad days. Your body will tell you what it is ready for.</div>
       </div>
     </div>
     <div style="height:16px;"></div>`;
@@ -2079,6 +2279,8 @@ function renderSettings() {
           <div>
             <div class="fw700">${user.name || '—'}</div>
             <div class="font-mono font-xs text-dim mt12">${user.skill ? 'Training: ' + (state.program?.skillLabel || user.skill) : 'No skill selected'}</div>
+            ${user.sportContext && user.sportContext !== 'general' ? `<div class="font-mono font-xs text-dim" style="margin-top:2px;">Context: ${user.sportContext.replace('_',' ')}</div>` : ''}
+            ${user.goal ? `<div class="font-mono font-xs" style="margin-top:4px;color:var(--accent);">Goal: ${user.goal.substring(0,60)}${user.goal.length>60?'...':''}</div>` : ''}
           </div>
           <div class="badge badge-accent">Phase ${state.program?.phase || 1}</div>
         </div>
@@ -2098,8 +2300,8 @@ function renderSettings() {
         <div class="card-sub mb12">Complete with a partner and update the result below.</div>
         <select class="form-input" id="pec-retest" style="margin-bottom:10px;">
           <option value="">Select result...</option>
-          <option value="tight">Feel a stretch — pec minor is tight</option>
-          <option value="normal">No stretch felt — normal range</option>
+          <option value="tight">Cannot pass shoulder line or under 30° — pec major tight</option>
+          <option value="normal">30–44° or full 45°+ range — normal or good</option>
         </select>
         <button class="btn btn-secondary btn-sm" onclick="updatePecTest()">Update assessment</button>
       </div>`;
@@ -2117,7 +2319,7 @@ function renderSettings() {
   html += `
     <div class="sec-label" style="padding:0;">About</div>
     <div class="card mb12">
-      <div class="flex-between mb8"><div class="fw700 font-sm">FlexTrack</div><div class="font-mono font-xs text-dim">v2.0</div></div>
+      <div class="flex-between mb8"><div class="fw700 font-sm">FlexTrack</div><div class="font-mono font-xs text-dim">v3.0</div></div>
       <div class="card-sub">Built around the Mobility & Flexibility Toolkit by Matt Smith. Program logic derived from course material on pike, pancake, side split, and shoulder training.</div>
     </div>
     <div style="height:16px;"></div>`;
@@ -2176,6 +2378,7 @@ function resetApp() {
   document.getElementById('ob-name').value = '';
   document.querySelectorAll('#ob-skill-select .option-pill').forEach(p => p.classList.remove('selected'));
   selectedSkill = null;
+  selectedSportContext = null;
   assessAnswers = {};
   assessStep = 0;
   showScreen('onboard');
