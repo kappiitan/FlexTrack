@@ -1127,51 +1127,6 @@ function assessNext() {
 function assessBack() {
   if (assessStep > 0) { assessStep--; renderAssessStep(); }
 }
-}
-
-function renderAssessStep() {
-  const q = assessQuestions[assessStep];
-  const total = assessQuestions.length;
-  const pct = (assessStep / total) * 100;
-  document.getElementById('assess-fill').style.width = pct + '%';
-  document.getElementById('assess-step-label').textContent = `Step ${assessStep + 1} of ${total}`;
-  document.getElementById('assess-back-btn').style.display = assessStep === 0 ? 'none' : 'flex';
-
-  let html = `<div class="assess-q">${q.q}</div><div class="assess-hint">${q.hint}</div>`;
-  if (q.type === 'options') {
-    html += `<div class="option-grid" id="assess-opts">`;
-    q.options.forEach((o, i) => {
-      const sel = assessAnswers[q.id] === o ? 'selected' : '';
-      html += `<div class="option-pill ${sel}" onclick="selectAssessOpt(this,'${q.id}','${o.replace(/'/g,"\\'")}')">${o}</div>`;
-    });
-    html += `</div>`;
-  }
-  document.getElementById('assess-content').innerHTML = html;
-  document.getElementById('assess-scroll').scrollTop = 0;
-}
-
-function selectAssessOpt(el, id, val) {
-  document.querySelectorAll('#assess-opts .option-pill').forEach(p => p.classList.remove('selected'));
-  el.classList.add('selected');
-  assessAnswers[id] = val;
-}
-
-function assessNext() {
-  const q = assessQuestions[assessStep];
-  if (!assessAnswers[q.id]) { alert('Please select an answer.'); return; }
-  assessStep++;
-  if (assessStep >= assessQuestions.length) {
-    state.user.assessAnswers = assessAnswers;
-    generateProgram();
-  } else {
-    renderAssessStep();
-  }
-}
-
-function assessBack() {
-  if (assessStep > 0) { assessStep--; renderAssessStep(); }
-}
-
 // ═══════════════════════════════════════════════════════
 // PROGRAM GENERATION
 // ═══════════════════════════════════════════════════════
@@ -1735,7 +1690,7 @@ function toggleEx(header) {
 }
 
 function endSession() {
-  if (!confirm('Finish this session and save your log?')) return;
+  if (!state.currentSession) return;
   const exerciseIds = state.currentSession._exerciseList ||
     (state.program.sessions.find(s => s.id === state.currentSession.sessionType) || state.program.sessions[0]).exercises;
   const exercises = [];
