@@ -1350,13 +1350,21 @@ function renderProgramPreview() {
 }
 
 function confirmProgram() {
-  state.sessions = state.sessions || [];
-  saveState();
-  renderHome();
-  renderProgress();
-  renderLibrary();
-  showScreen('home');
-  document.getElementById('bottom-nav').style.display = 'flex';
+  try {
+    state.sessions = state.sessions || [];
+    saveState();
+    renderHome();
+    renderProgress();
+    renderLibrary();
+    showScreen('home');
+    document.getElementById('bottom-nav').style.display = 'flex';
+    document.querySelectorAll('.nav-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+  } catch(e) {
+    console.error('confirmProgram error:', e);
+    // Still navigate even if render fails
+    showScreen('home');
+    document.getElementById('bottom-nav').style.display = 'flex';
+  }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1366,6 +1374,7 @@ function confirmProgram() {
 function renderHome() {
   if (!state.user || !state.program) return;
   const name = state.user.name.split(' ')[0];
+  const sessions = state.sessions || [];
   document.getElementById('home-greeting').innerHTML = `Hi, <span>${name}</span>`;
   document.getElementById('home-skill-badge').textContent = state.program.skillLabel;
 
