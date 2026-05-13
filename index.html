@@ -257,7 +257,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
     <div class="px">
       <div class="form-group">
         <label class="form-label">Your name</label>
-        <input type="text" class="form-input" id="ob-name" placeholder="Enter your name">
+        <input type="text" class="form-input" id="ob-name" placeholder="Enter your name" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false">
       </div>
       <div class="form-group">
         <label class="form-label">Which skill do you want to train first?</label>
@@ -536,6 +536,32 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
     <div class="modal-title" id="log-modal-title">Session Details</div>
     <div id="log-modal-content"></div>
     <button class="btn btn-secondary mt16" onclick="closeLogModal()">Close</button>
+  </div>
+</div>
+
+<!-- EDIT SESSION MODAL -->
+<div class="modal-overlay" id="edit-session-modal">
+  <div class="modal" style="max-height:90vh;display:flex;flex-direction:column;">
+    <div class="modal-handle"></div>
+    <div class="modal-title">✎ Edit Session</div>
+    <div id="edit-session-content" style="overflow-y:auto;flex:1;padding-right:4px;"></div>
+    <div style="display:flex;gap:8px;margin-top:16px;flex-shrink:0;">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeEditSession()">Cancel</button>
+      <button class="btn btn-primary" style="flex:2" onclick="saveEditSession()">Save changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE SESSION CONFIRMATION MODAL -->
+<div class="modal-overlay" id="delete-session-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🗑 Delete session?</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6;">This session will be permanently deleted. This cannot be undone.</div>
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button class="btn btn-secondary" style="flex:1" onclick="cancelDeleteSession()">Keep it</button>
+      <button class="btn btn-primary" style="flex:1;background:rgba(220,76,76,0.9);color:#fff;" onclick="executeDeleteSession()">Delete</button>
+    </div>
   </div>
 </div>
 
@@ -1103,6 +1129,42 @@ function loadState() {
 }
 
 // ═══════════════════════════════════════════════════════
+// TOAST — Samsung Internet blocks alert(), use this instead
+// ═══════════════════════════════════════════════════════
+
+let toastTimer = null;
+function toast(msg, type) {
+  type = type || 'info';
+  let el = document.getElementById('flex-toast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'flex-toast';
+    el.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:90px;z-index:9999;padding:12px 18px;border-radius:8px;font-size:13px;font-weight:600;max-width:88vw;text-align:center;line-height:1.4;box-shadow:0 4px 16px rgba(0,0,0,0.4);transition:opacity 0.2s, transform 0.2s;opacity:0;pointer-events:none;';
+    document.body.appendChild(el);
+  }
+  const colors = {
+    info:    { bg: 'rgba(40,42,48,0.96)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' },
+    warn:    { bg: 'rgba(240,184,64,0.96)', color: '#1a1a1a', border: '1px solid rgba(240,184,64,1)' },
+    error:   { bg: 'rgba(220,76,76,0.96)', color: '#fff', border: '1px solid rgba(220,76,76,1)' },
+    success: { bg: 'rgba(200,240,96,0.96)', color: '#1a1a1a', border: '1px solid rgba(200,240,96,1)' }
+  };
+  const c = colors[type] || colors.info;
+  el.style.background = c.bg;
+  el.style.color = c.color;
+  el.style.border = c.border;
+  el.textContent = msg;
+  requestAnimationFrame(() => {
+    el.style.opacity = '1';
+    el.style.transform = 'translateX(-50%) translateY(0)';
+  });
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateX(-50%) translateY(8px)';
+  }, 2400);
+}
+
+// ═══════════════════════════════════════════════════════
 // ONBOARDING
 // ═══════════════════════════════════════════════════════
 
@@ -1116,8 +1178,8 @@ document.querySelectorAll('#ob-skill-select .option-pill').forEach(p => {
 
 function startAssessment() {
   const name = document.getElementById('ob-name').value.trim();
-  if (!name) { alert('Please enter your name.'); return; }
-  if (!selectedSkill) { alert('Please select a skill to train.'); return; }
+  if (!name) { toast('Please enter your name.', 'warn'); return; }
+  if (!selectedSkill) { toast('Please select a skill to train.', 'warn'); return; }
   state.user = { name, skill: selectedSkill, assessAnswers: {}, goal: null, sportContext: null };
   showScreen('goals');
 }
@@ -1143,7 +1205,7 @@ function selectSportContext(el) {
 }
 
 function goalsNext() {
-  if (!selectedSportContext) { alert('Please select what you are training flexibility for.'); return; }
+  if (!selectedSportContext) { toast('Please select what you are training flexibility for.', 'warn'); return; }
   const goalText = document.getElementById('goal-text').value.trim();
   const goalDate = document.getElementById('goal-date').value;
   state.user.goal = goalText || null;
@@ -1205,7 +1267,7 @@ function selectAssessOpt(el, id, val, multi) {
 function assessNext() {
   const q = assessQuestions[assessStep];
   const ans = assessAnswers[q.id];
-  if (!ans || (Array.isArray(ans) && ans.length === 0)) { alert('Please select an answer to continue.'); return; }
+  if (!ans || (Array.isArray(ans) && ans.length === 0)) { toast('Please select an answer to continue.', 'warn'); return; }
   assessStep++;
   if (assessStep >= assessQuestions.length) {
     state.user.assessAnswers = assessAnswers;
@@ -1487,10 +1549,17 @@ function renderHome() {
     sessions.slice(-3).reverse().forEach(s => {
       const d = new Date(s.date);
       const dateStr = d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
+      const editStatus = getEditStatus(s);
+      let editLabel = '';
+      if (s.editedAt) {
+        editLabel = ` · <span style="color:var(--amber);">✎ edited</span>`;
+      } else if (editStatus.canEdit) {
+        editLabel = ` · <span style="color:var(--text3);">editable ${editStatus.daysLeft}d</span>`;
+      }
       html += `<div class="history-item" onclick="showSessionLog('${s.id}')">
         <div style="flex:1">
           <div class="history-title">Session ${s.sessionType}</div>
-          <div class="history-meta">${dateStr}${s.rpe ? ' · RPE ' + s.rpe + '/10' : ''} · ${s.exercises?.length || 0} exercises</div>
+          <div class="history-meta">${dateStr}${s.rpe ? ' · RPE ' + s.rpe + '/10' : ''} · ${s.exercises?.length || 0} exercises${editLabel}</div>
         </div>
         <div style="font-size:20px; color:var(--text3)">›</div>
       </div>`;
@@ -1668,7 +1737,7 @@ function updatePresessionPreview() {
 }
 
 function confirmPresession() {
-  if (!psState.time || !psState.equip) { alert('Please select time and equipment.'); return; }
+  if (!psState.time || !psState.equip) { toast('Please select time and equipment.', 'warn'); return; }
   closePresession();
   const filtered = filterSession(psState.sessionId, psState.time, psState.equip);
   startSession(psState.sessionId, filtered, psState.equip);
@@ -1789,7 +1858,7 @@ function startSession(sessionId, filteredExercises, equip) {
           <div class="ex-section">Log sets</div>
           ${setsHtml}
           <div class="ex-section">Measurement <span style="color:var(--text3);font-size:9px;letter-spacing:0.04em;">— FIRST SET ONLY</span></div>
-          <input class="form-input" type="text" id="ex${idx}_measure" placeholder="${ex.measureLabel}" style="font-size:13px;">
+          <input class="form-input" type="text" id="ex${idx}_measure" placeholder="${ex.measureLabel}" style="font-size:13px;" autocomplete="off" autocorrect="off" spellcheck="false">
           <div class="ex-section">Exercise notes</div>
           <input class="form-input" type="text" id="ex${idx}_notes" placeholder="${ex.measureLabel.split('/')[0].trim()} — any cues, pain, left vs right?" style="font-size:12px;color:var(--text2)">
         </div>
@@ -1999,9 +2068,19 @@ function renderProgress() {
     const d = new Date(s.date);
     const dateStr = d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
     const timeStr = d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+    const editStatus = getEditStatus(s);
+    let editLabel = '';
+    if (s.editedAt) {
+      const editDate = new Date(s.editedAt);
+      const editDaysAgo = Math.floor((new Date() - editDate) / (1000 * 60 * 60 * 24));
+      const editStr = editDaysAgo === 0 ? 'today' : editDaysAgo === 1 ? '1d ago' : `${editDaysAgo}d ago`;
+      editLabel = ` · <span style="color:var(--amber);">✎ edited ${editStr}</span>`;
+    } else if (editStatus.canEdit) {
+      editLabel = ` · <span style="color:var(--text3);">editable ${editStatus.daysLeft}d</span>`;
+    }
     html += `<div class="history-item" onclick="showSessionLog('${s.id}')">
       <div style="flex:1"><div class="history-title">Session ${s.sessionType}</div>
-      <div class="history-meta">${dateStr} at ${timeStr}${s.rpe ? ' · RPE '+s.rpe+'/10' : ''} · ${s.exercises?.length||0} exercises</div></div>
+      <div class="history-meta">${dateStr} at ${timeStr}${s.rpe ? ' · RPE '+s.rpe+'/10' : ''} · ${s.exercises?.length||0} exercises${editLabel}</div></div>
       <div style="font-size:20px;color:var(--text3)">›</div>
     </div>`;
   });
@@ -2248,6 +2327,16 @@ function showSessionLog(sessionId) {
   if (!s) return;
   const d = new Date(s.date).toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
   let html = `<div class="font-mono font-xs text-dim mb12">${d}</div>`;
+
+  // Edit metadata banner
+  const editStatus = getEditStatus(s);
+  if (s.editedAt) {
+    const editDate = new Date(s.editedAt);
+    const editDaysAgo = Math.floor((new Date() - editDate) / (1000 * 60 * 60 * 24));
+    const editStr = editDaysAgo === 0 ? 'today' : editDaysAgo === 1 ? 'yesterday' : `${editDaysAgo} days ago`;
+    html += `<div class="font-mono font-xs text-dim mb12" style="color:var(--amber);">✎ Edited ${editStr}</div>`;
+  }
+
   (s.exercises || []).forEach(ex => {
     html += `<div class="card card-sm mb8">
       <div class="fw700 font-sm mb8">${ex.name}</div>`;
@@ -2257,16 +2346,231 @@ function showSessionLog(sessionId) {
       html += `<div class="font-mono font-xs text-dim mb4">Set ${set.set}: ${set.reps || '—'} ${unit} ${set.kg ? '· ' + set.kg + 'kg' : ''} ${set.done ? '✓' : ''}</div>`;
     });
     if (ex.measure) html += `<div class="note-box" style="margin-top:8px; font-size:12px;">${ex.measure}</div>`;
+    if (ex.notes) html += `<div class="font-mono font-xs text-dim mt8">Note: ${ex.notes}</div>`;
     html += `</div>`;
   });
-  if (s.notes) html += `<div class="card card-sm mb8"><div class="fw700 font-sm mb4">Notes</div><div class="font-sm text-muted">${s.notes}</div></div>`;
+  if (s.notes) html += `<div class="card card-sm mb8"><div class="fw700 font-sm mb4">Session notes</div><div class="font-sm text-muted">${s.notes}</div></div>`;
+  if (s.rpe) html += `<div class="font-mono font-xs text-dim mb12">RPE: ${s.rpe}/10</div>`;
+
+  // Edit button if within 7-day window
+  if (editStatus.canEdit) {
+    html += `<button class="btn btn-secondary mt12" onclick="openEditSession('${s.id}')" style="width:100%;">✎ Edit session</button>`;
+    html += `<div class="font-mono font-xs text-dim" style="text-align:center;margin-top:6px;">Editable for ${editStatus.daysLeft} more day${editStatus.daysLeft !== 1 ? 's' : ''}</div>`;
+  } else {
+    html += `<div class="note-box" style="margin-top:12px;font-size:12px;">Editing locked — sessions can only be edited within 7 days of completion.</div>`;
+  }
+
+  // Delete button (always available)
+  html += `<button class="btn btn-secondary" style="width:100%;margin-top:8px;color:var(--coral);" onclick="confirmDeleteSession('${s.id}')">🗑 Delete session</button>`;
+
   document.getElementById('log-modal-title').textContent = `Session ${s.sessionType}`;
   document.getElementById('log-modal-content').innerHTML = html;
   document.getElementById('log-modal').classList.add('active');
 }
 
+function getEditStatus(session) {
+  const sessionDate = new Date(session.date);
+  const now = new Date();
+  const daysSince = Math.floor((now - sessionDate) / (1000 * 60 * 60 * 24));
+  const daysLeft = 7 - daysSince;
+  return {
+    canEdit: daysSince < 7,
+    daysLeft: Math.max(0, daysLeft)
+  };
+}
+
 function closeLogModal() {
   document.getElementById('log-modal').classList.remove('active');
+}
+
+// ═══════════════════════════════════════════════════════
+// EDIT SESSION — 7-day window from session date
+// ═══════════════════════════════════════════════════════
+
+let editingSessionId = null;
+
+function openEditSession(sessionId) {
+  const s = (state.sessions || []).find(x => x.id === sessionId);
+  if (!s) return;
+  const status = getEditStatus(s);
+  if (!status.canEdit) {
+    toast('Editing window has expired (7 days).', 'error');
+    return;
+  }
+  editingSessionId = sessionId;
+  closeLogModal();
+  renderEditSession(s);
+  document.getElementById('edit-session-modal').classList.add('active');
+}
+
+function renderEditSession(s) {
+  let html = '';
+  // Date
+  const dateVal = new Date(s.date).toISOString().split('T')[0];
+  html += `<div class="form-group">
+    <label class="form-label">Session date</label>
+    <input type="date" class="form-input" id="edit-date" value="${dateVal}">
+  </div>`;
+
+  // Equipment
+  const equipOpts = ['Bands only', 'Bands + Dumbbells', 'Bands + Dumbbells + Plates', 'Full gym access'];
+  html += `<div class="form-group">
+    <label class="form-label">Equipment used</label>
+    <select class="form-input" id="edit-equip">`;
+  equipOpts.forEach(opt => {
+    html += `<option value="${opt}" ${s.equipment === opt ? 'selected' : ''}>${opt}</option>`;
+  });
+  html += `</select></div>`;
+
+  // RPE
+  html += `<div class="form-group">
+    <label class="form-label">RPE (1-10)</label>
+    <select class="form-input" id="edit-rpe">
+      <option value="">— Skip —</option>`;
+  for (let i = 1; i <= 10; i++) {
+    html += `<option value="${i}" ${s.rpe == i ? 'selected' : ''}>${i}</option>`;
+  }
+  html += `</select></div>`;
+
+  // Exercises — sets, weights, measure, notes
+  html += `<div class="sec-label" style="padding:0;margin-top:8px;">Exercises</div>`;
+  (s.exercises || []).forEach((ex, exIdx) => {
+    const exData = EXERCISES[ex.id];
+    const unit = exData?.unit === 'reps' ? 'reps' : 'sec';
+    const hasWeight = exData?.badge === 'loaded-stretch';
+    html += `<div class="card card-sm mb8">
+      <div class="fw700 font-sm mb8">${ex.name}</div>`;
+    (ex.sets || []).forEach((set, setIdx) => {
+      html += `<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+        <div class="font-mono font-xs text-dim" style="width:42px;">Set ${set.set}</div>
+        <input type="number" class="set-input" id="edit-ex${exIdx}-s${setIdx}-reps" value="${set.reps || ''}" placeholder="0" min="0" style="width:60px;" autocomplete="off">
+        <span class="font-mono font-xs text-dim">${unit}</span>`;
+      if (hasWeight) {
+        html += `<input type="number" class="set-input" id="edit-ex${exIdx}-s${setIdx}-kg" value="${set.kg || ''}" placeholder="0" min="0" style="width:60px;margin-left:8px;" autocomplete="off">
+        <span class="font-mono font-xs text-dim">kg</span>`;
+      }
+      html += `</div>`;
+    });
+    // Measure
+    html += `<div style="margin-top:8px;">
+      <label class="form-label" style="font-size:11px;">Measurement</label>
+      <input type="text" class="form-input" id="edit-ex${exIdx}-measure" value="${(ex.measure || '').replace(/"/g, '\u0026quot;')}" placeholder="${exData?.measureLabel || ''}" style="font-size:12px;" autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>`;
+    // Exercise notes
+    html += `<div style="margin-top:6px;">
+      <label class="form-label" style="font-size:11px;">Notes</label>
+      <input type="text" class="form-input" id="edit-ex${exIdx}-notes" value="${(ex.notes || '').replace(/"/g, '\u0026quot;')}" placeholder="cues, pain, L vs R" style="font-size:12px;" autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>`;
+    html += `</div>`;
+  });
+
+  // Session notes
+  html += `<div class="form-group">
+    <label class="form-label">Session notes</label>
+    <textarea class="form-input form-textarea" id="edit-session-notes" style="min-height:60px;" autocomplete="off" autocorrect="off" spellcheck="false">${s.notes || ''}</textarea>
+  </div>`;
+
+  document.getElementById('edit-session-content').innerHTML = html;
+}
+
+function saveEditSession() {
+  if (!editingSessionId) return;
+  const sessionIdx = (state.sessions || []).findIndex(x => x.id === editingSessionId);
+  if (sessionIdx < 0) { toast('Session not found.', 'error'); return; }
+  const s = state.sessions[sessionIdx];
+
+  // Re-check window (in case modal stayed open across midnight boundary)
+  const status = getEditStatus(s);
+  if (!status.canEdit) {
+    toast('Editing window has expired.', 'error');
+    closeEditSession();
+    return;
+  }
+
+  // Update date
+  const newDate = document.getElementById('edit-date').value;
+  if (newDate) {
+    const oldTime = new Date(s.date);
+    const newDt = new Date(newDate);
+    newDt.setHours(oldTime.getHours(), oldTime.getMinutes(), oldTime.getSeconds());
+    s.date = newDt.toISOString();
+  }
+
+  // Update equipment
+  s.equipment = document.getElementById('edit-equip').value;
+
+  // Update RPE
+  const rpeVal = document.getElementById('edit-rpe').value;
+  s.rpe = rpeVal ? parseInt(rpeVal, 10) : null;
+
+  // Update exercises
+  (s.exercises || []).forEach((ex, exIdx) => {
+    (ex.sets || []).forEach((set, setIdx) => {
+      const repsEl = document.getElementById(`edit-ex${exIdx}-s${setIdx}-reps`);
+      const kgEl = document.getElementById(`edit-ex${exIdx}-s${setIdx}-kg`);
+      if (repsEl) set.reps = repsEl.value;
+      if (kgEl) set.kg = kgEl.value;
+    });
+    const measureEl = document.getElementById(`edit-ex${exIdx}-measure`);
+    const notesEl = document.getElementById(`edit-ex${exIdx}-notes`);
+    if (measureEl) ex.measure = measureEl.value;
+    if (notesEl) ex.notes = notesEl.value;
+  });
+
+  // Update session notes
+  s.notes = document.getElementById('edit-session-notes').value;
+
+  // Stamp edit time
+  s.editedAt = new Date().toISOString();
+
+  saveState();
+  closeEditSession();
+  toast('Session updated.', 'success');
+
+  // Re-render screens that show session data
+  renderHome();
+  renderProgress();
+  // Reopen the log to show updated values
+  showSessionLog(editingSessionId);
+  editingSessionId = null;
+}
+
+function closeEditSession() {
+  document.getElementById('edit-session-modal').classList.remove('active');
+  editingSessionId = null;
+}
+
+// ═══════════════════════════════════════════════════════
+// DELETE SESSION
+// ═══════════════════════════════════════════════════════
+
+let deletingSessionId = null;
+
+function confirmDeleteSession(sessionId) {
+  deletingSessionId = sessionId;
+  document.getElementById('delete-session-modal').classList.add('active');
+}
+
+function cancelDeleteSession() {
+  document.getElementById('delete-session-modal').classList.remove('active');
+  deletingSessionId = null;
+}
+
+function executeDeleteSession() {
+  if (!deletingSessionId) return;
+  const sessionIdx = (state.sessions || []).findIndex(x => x.id === deletingSessionId);
+  if (sessionIdx < 0) {
+    toast('Session not found.', 'error');
+    cancelDeleteSession();
+    return;
+  }
+  state.sessions.splice(sessionIdx, 1);
+  saveState();
+  cancelDeleteSession();
+  closeLogModal();
+  toast('Session deleted.', 'success');
+  renderHome();
+  renderProgress();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2557,7 +2861,7 @@ function renderSettings() {
 
 function updatePecTest() {
   const val = document.getElementById('pec-retest')?.value;
-  if (!val) { alert('Please select a result.'); return; }
+  if (!val) { toast('Please select a result.', 'warn'); return; }
   state.user.assessAnswers.pec_test = val === 'tight'
     ? 'Feel a definite stretch when shoulders are pressed flat'
     : 'No stretch felt — shoulders press flat easily';
@@ -2565,12 +2869,12 @@ function updatePecTest() {
   state.program.pecTight = val === 'tight';
   saveState();
   renderSettings();
-  alert('Assessment updated.');
+  toast('Assessment updated.', 'success');
 }
 
 function getStorageSize() {
   try {
-    const data = localStorage.getItem('flextrack_state') || '';
+    const data = localStorage.getItem('flextrack_v2') || '';
     const bytes = new Blob([data]).size;
     if (bytes < 1024) return bytes + ' B';
     return (bytes / 1024).toFixed(1) + ' KB';
