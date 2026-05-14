@@ -2021,14 +2021,18 @@ function startInlineTimer(idx) {
     btn.classList.add('running');
     t.interval = setInterval(() => {
       t.seconds--;
-      updateInlineTimerDisplay(idx);
       if (t.seconds <= 0) {
         clearInterval(t.interval);
+        t.interval = null;
         t.running = false;
+        t.seconds = 0;
+        updateInlineTimerDisplay(idx);
         btn.textContent = 'Done ✓';
         btn.classList.remove('running');
         playTimerDoneBeep();
         toast('Rest complete.', 'success');
+      } else {
+        updateInlineTimerDisplay(idx);
       }
     }, 1000);
   }
