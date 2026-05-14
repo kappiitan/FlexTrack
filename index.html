@@ -103,7 +103,7 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); font
 .ring-unit { font-family: var(--mono); font-size: 9px; color: var(--text3); letter-spacing: 0.08em; }
 
 /* ── STAT GRID ── */
-.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px; }
 .stat-card { background: var(--bg3); border-radius: var(--radius-sm); padding: 14px; }
 .stat-val { font-size: 24px; font-weight: 800; letter-spacing: -1px; color: var(--accent); }
 .stat-label { font-family: var(--mono); font-size: 10px; color: var(--text3); letter-spacing: 0.06em; margin-top: 2px; }
@@ -477,6 +477,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
 
     <div id="ps-exercise-preview" style="margin-bottom:16px;"></div>
 
+    <div class="note-box" style="margin-bottom:12px;font-size:12px;line-height:1.6;">
+      <strong>🔥 Specific warm-up</strong> — Before your working sets, run through the first 1–2 exercises at <strong>reduced range/weight</strong>: 3–5 reps or short (&lt;15s) holds, increasing range each set until you reach your working depth. Don't fatigue — you're priming, not training. <span style="color:var(--text3);">These warmup sets don't count and aren't recorded.</span>
+    </div>
+
     <div style="display:flex; gap:8px;">
       <button class="btn btn-secondary" style="flex:1" onclick="closePresession()">Cancel</button>
       <button class="btn btn-primary" style="flex:2" id="ps-start-btn" onclick="confirmPresession()">Let's go →</button>
@@ -561,6 +565,39 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
     <div style="display:flex;gap:8px;margin-top:16px;">
       <button class="btn btn-secondary" style="flex:1" onclick="cancelDeleteSession()">Keep it</button>
       <button class="btn btn-primary" style="flex:1;background:rgba(220,76,76,0.9);color:#fff;" onclick="executeDeleteSession()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- SKIP EXERCISE MODAL -->
+<div class="modal-overlay" id="skip-ex-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">⊘ Skip exercise?</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.6;">Why are you skipping <span id="skip-ex-name" style="color:var(--text);font-weight:600;">this exercise</span>?</div>
+    <div id="skip-reason-opts" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
+      <button class="option-pill" onclick="setSkipReason('Pain or discomfort')">Pain or discomfort</button>
+      <button class="option-pill" onclick="setSkipReason('Equipment unavailable')">Equipment unavailable</button>
+      <button class="option-pill" onclick="setSkipReason('Time constraint')">Time constraint</button>
+      <button class="option-pill" onclick="setSkipReason('Too difficult today')">Too difficult today</button>
+      <button class="option-pill" onclick="setSkipReason('Other')">Other</button>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeSkipExercise()">Cancel</button>
+      <button class="btn btn-primary" style="flex:1" onclick="confirmSkipExercise()">Skip it</button>
+    </div>
+  </div>
+</div>
+
+<!-- SWAP EXERCISE MODAL -->
+<div class="modal-overlay" id="swap-ex-modal">
+  <div class="modal" style="max-height:80vh;display:flex;flex-direction:column;">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🔄 Swap exercise</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.6;">Replace <span id="swap-ex-name" style="color:var(--text);font-weight:600;">this exercise</span> with another from the same category:</div>
+    <div id="swap-ex-options" style="overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:6px;margin-bottom:12px;"></div>
+    <div style="display:flex;gap:8px;flex-shrink:0;">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeSwapExercise()">Cancel</button>
     </div>
   </div>
 </div>
@@ -1461,6 +1498,8 @@ function renderHome() {
     return (now - d) < 7 * 24 * 60 * 60 * 1000;
   });
   const streak = computeStreak(sessions);
+  const longestStreak = computeLongestStreak(sessions);
+  const weekStreak = computeWeekStreak(sessions);
 
   // Streak dots (last 7 days)
   const today = new Date().toDateString();
@@ -1503,8 +1542,9 @@ function renderHome() {
   const readinessPct = Math.round(((checksDone / totalChecks) * 0.7 + consistency * 0.3) * 100);
 
   html += `\n    <div class="stat-grid mb12">
-      <div class="stat-card"><div class="stat-val">${streak}</div><div class="stat-label">Day streak</div></div>
-      <div class="stat-card"><div class="stat-val">${sessions.length}</div><div class="stat-label">Sessions done</div></div>
+      <div class="stat-card"><div class="stat-val">${streak}</div><div class="stat-label">Session streak${longestStreak > streak ? ` · best ${longestStreak}` : ''}</div></div>
+      <div class="stat-card"><div class="stat-val">${weekStreak}</div><div class="stat-label">Week streak</div></div>
+      <div class="stat-card"><div class="stat-val">${sessions.length}</div><div class="stat-label">Total sessions</div></div>
     </div>
     <div class="card mb12">
       <div class="flex-between mb8"><div class="card-title">This week</div>${streakHtml}</div>
@@ -1634,19 +1674,55 @@ function toggleExitCheck(i) {
 }
 
 function computeStreak(sessions) {
+  // Session streak: consecutive sessions logged within 7 days of the previous one.
+  // This rewards consistency with flexibility training cadence (3–5 days between sessions per course methodology)
+  // without penalizing the rest days the course requires.
   if (!sessions.length) return 0;
+  const sorted = sessions.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+  const now = new Date();
+  // Check if the latest session is still within the live window (≤7 days ago). If not, streak is 0.
+  const last = new Date(sorted[sorted.length - 1].date);
+  if ((now - last) > 7 * 24 * 60 * 60 * 1000) return 0;
+  let streak = 1;
+  for (let i = sorted.length - 1; i > 0; i--) {
+    const cur = new Date(sorted[i].date);
+    const prev = new Date(sorted[i - 1].date);
+    const gap = (cur - prev) / (1000 * 60 * 60 * 24);
+    if (gap <= 7) streak++;
+    else break;
+  }
+  return streak;
+}
+
+function computeLongestStreak(sessions) {
+  if (!sessions.length) return 0;
+  const sorted = sessions.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+  let longest = 1, current = 1;
+  for (let i = 1; i < sorted.length; i++) {
+    const gap = (new Date(sorted[i].date) - new Date(sorted[i - 1].date)) / (1000 * 60 * 60 * 24);
+    if (gap <= 7) { current++; longest = Math.max(longest, current); }
+    else { current = 1; }
+  }
+  return longest;
+}
+
+function computeWeekStreak(sessions) {
+  // Consecutive weeks (Mon–Sun) with at least 1 session, ending this week.
+  if (!sessions.length) return 0;
+  function weekStart(d) {
+    const x = new Date(d);
+    x.setHours(0, 0, 0, 0);
+    const day = x.getDay(); // 0 Sun … 6 Sat
+    const diff = (day === 0 ? -6 : 1 - day); // back to Monday
+    x.setDate(x.getDate() + diff);
+    return x;
+  }
+  const weeks = new Set(sessions.map(s => weekStart(new Date(s.date)).toISOString()));
   let streak = 0;
-  let d = new Date();
-  d.setHours(0,0,0,0);
-  for (let i = 0; i < 60; i++) {
-    const ds = d.toDateString();
-    if (sessions.some(s => new Date(s.date).toDateString() === ds)) {
-      streak++;
-      d.setDate(d.getDate() - 1);
-    } else {
-      if (i === 0) { d.setDate(d.getDate() - 1); continue; }
-      break;
-    }
+  let cursor = weekStart(new Date());
+  while (weeks.has(cursor.toISOString())) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 7);
   }
   return streak;
 }
@@ -1828,7 +1904,7 @@ function startSession(sessionId, filteredExercises, equip) {
     const altNote = needsAlt ? `<div class="warn-box" style="margin-top:8px; font-size:12px;">Bodyweight modification: use longer holds (+2 sec at bottom) to compensate for no added weight.</div>` : '';
 
     html += `
-      <div class="ex-card" style="margin-bottom:12px;">
+      <div class="ex-card" id="ex-card-${idx}" style="margin-bottom:12px;" data-ex-id="${ex.id}" data-ex-idx="${idx}">
         <div class="ex-header" onclick="toggleEx(this)">
           <div class="ex-num">${idx + 1}</div>
           <div class="ex-info">
@@ -1842,6 +1918,10 @@ function startSession(sessionId, filteredExercises, equip) {
             <span class="badge ${badgeMap[ex.badge]}">${labelMap[ex.badge]}</span>
             ${needsAlt ? '<span class="badge badge-amber">BW modification</span>' : ''}
           </div>
+          <div style="display:flex;gap:6px;margin-top:8px;">
+            <button class="btn btn-secondary" style="flex:1;padding:6px 10px;font-size:11px;" onclick="event.stopPropagation();openSwapExercise(${idx})">🔄 Swap</button>
+            <button class="btn btn-secondary" style="flex:1;padding:6px 10px;font-size:11px;color:var(--amber);" onclick="event.stopPropagation();openSkipExercise(${idx})">⊘ Skip</button>
+          </div>
           <div class="ex-section">Prescription</div>
           <div class="ex-text mb8">${ex.prescription}</div>
           ${altNote}
@@ -1851,7 +1931,10 @@ function startSession(sessionId, filteredExercises, equip) {
           <div class="timer-bar">
             <div>
               <div class="timer-label">Rest timer</div>
-              <div class="timer-display" id="inline-timer-${idx}">01:30</div>
+              <div class="timer-display" id="inline-timer-${idx}">${(() => {
+                const s = ex.badge === 'loaded-stretch' ? 120 : ex.badge === 'active' || ex.badge === 'technique' ? 60 : ex.badge === 'weak-link' ? 75 : 90;
+                return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+              })()}</div>
             </div>
             <button class="timer-btn" id="timer-btn-${idx}" onclick="startInlineTimer(${idx})">Start</button>
           </div>
@@ -1860,7 +1943,7 @@ function startSession(sessionId, filteredExercises, equip) {
           <div class="ex-section">Measurement <span style="color:var(--text3);font-size:9px;letter-spacing:0.04em;">— FIRST SET ONLY</span></div>
           <input class="form-input" type="text" id="ex${idx}_measure" placeholder="${ex.measureLabel}" style="font-size:13px;" autocomplete="off" autocorrect="off" spellcheck="false">
           <div class="ex-section">Exercise notes</div>
-          <input class="form-input" type="text" id="ex${idx}_notes" placeholder="${ex.measureLabel.split('/')[0].trim()} — any cues, pain, left vs right?" style="font-size:12px;color:var(--text2)">
+          <input class="form-input" type="text" id="ex${idx}_notes" placeholder="${ex.measureLabel.split('/')[0].trim()} — any cues, pain, left vs right?" style="font-size:12px;color:var(--text2)" autocomplete="off" autocorrect="off" spellcheck="false">
         </div>
       </div>`;
   });
@@ -1881,18 +1964,54 @@ function startSession(sessionId, filteredExercises, equip) {
 
 const inlineTimers = {};
 
+// Generate a real beep using Web Audio API instead of the broken base64 audio
+function playTimerDoneBeep() {
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.45);
+    // Vibrate on devices that support it
+    if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
+  } catch(e) {}
+}
+
+function getRestSecondsFor(idx) {
+  // Pull recommended rest from the exercise definition. Loaded stretches need longer rest.
+  if (!state.currentSession) return 90;
+  const exId = state.currentSession._exerciseList?.[idx];
+  const ex = EXERCISES[exId];
+  if (!ex) return 90;
+  if (ex.badge === 'loaded-stretch') return 120; // loaded work needs more recovery
+  if (ex.badge === 'active' || ex.badge === 'technique') return 60;
+  if (ex.badge === 'weak-link') return 75;
+  return 90;
+}
+
 function setupInlineTimer(idx) {
-  inlineTimers[idx] = { seconds: 90, running: false, interval: null };
+  const defaultSec = getRestSecondsFor(idx);
+  inlineTimers[idx] = { seconds: defaultSec, defaultSec, running: false, interval: null };
   updateInlineTimerDisplay(idx);
 }
 
 function startInlineTimer(idx) {
   const t = inlineTimers[idx];
+  if (!t) return;
   const btn = document.getElementById(`timer-btn-${idx}`);
   if (t.running) {
     clearInterval(t.interval);
     t.running = false;
-    t.seconds = 90;
+    t.seconds = t.defaultSec;
     updateInlineTimerDisplay(idx);
     btn.textContent = 'Start';
     btn.classList.remove('running');
@@ -1908,7 +2027,8 @@ function startInlineTimer(idx) {
         t.running = false;
         btn.textContent = 'Done ✓';
         btn.classList.remove('running');
-        try { new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAA...').play(); } catch(e) {}
+        playTimerDoneBeep();
+        toast('Rest complete.', 'success');
       }
     }, 1000);
   }
@@ -1917,14 +2037,29 @@ function startInlineTimer(idx) {
 function updateInlineTimerDisplay(idx) {
   const t = inlineTimers[idx];
   const el = document.getElementById(`inline-timer-${idx}`);
-  if (!el) return;
+  if (!el || !t) return;
   const m = Math.floor(t.seconds / 60);
   const s = t.seconds % 60;
   el.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
 
 function toggleSetDone(el, exIdx, setNum) {
+  const wasChecked = el.classList.contains('checked');
   el.classList.toggle('checked');
+  // Auto-start rest timer when a set is marked complete (only when going unchecked → checked, and not the last set)
+  if (!wasChecked) {
+    const exId = state.currentSession?._exerciseList?.[exIdx];
+    const ex = EXERCISES[exId];
+    if (ex && setNum < ex.sets) {
+      const t = inlineTimers[exIdx];
+      if (t && !t.running) {
+        // Reset to default and start
+        clearInterval(t.interval);
+        t.seconds = t.defaultSec;
+        startInlineTimer(exIdx);
+      }
+    }
+  }
 }
 
 function toggleEx(header) {
@@ -1935,15 +2070,172 @@ function toggleEx(header) {
   chevron.classList.toggle('open', !isOpen);
 }
 
+// ═══════════════════════════════════════════════════════
+// SKIP / SWAP EXERCISE DURING SESSION
+// ═══════════════════════════════════════════════════════
+
+let skipState = { idx: null, reason: null };
+
+function openSkipExercise(idx) {
+  if (!state.currentSession) return;
+  const exId = state.currentSession._exerciseList[idx];
+  const ex = EXERCISES[exId];
+  if (!ex) return;
+  skipState = { idx, reason: null };
+  document.getElementById('skip-ex-name').textContent = ex.name;
+  document.querySelectorAll('#skip-reason-opts .option-pill').forEach(p => p.classList.remove('selected'));
+  document.getElementById('skip-ex-modal').classList.add('active');
+}
+
+function setSkipReason(reason) {
+  skipState.reason = reason;
+  document.querySelectorAll('#skip-reason-opts .option-pill').forEach(p => {
+    p.classList.toggle('selected', p.textContent === reason);
+  });
+}
+
+function closeSkipExercise() {
+  document.getElementById('skip-ex-modal').classList.remove('active');
+  skipState = { idx: null, reason: null };
+}
+
+function confirmSkipExercise() {
+  if (skipState.idx === null) return;
+  if (!skipState.reason) { toast('Pick a reason.', 'warn'); return; }
+  const idx = skipState.idx;
+  const exId = state.currentSession._exerciseList[idx];
+  // Track skipped exercises on the current session for later analysis
+  if (!state.currentSession._skipped) state.currentSession._skipped = [];
+  state.currentSession._skipped.push({ exerciseId: exId, reason: skipState.reason });
+  // Visually mark and disable inputs
+  const card = document.getElementById(`ex-card-${idx}`);
+  if (card) {
+    card.style.opacity = '0.4';
+    card.querySelectorAll('input, button').forEach(el => {
+      if (!el.classList.contains('skip-unskip-btn')) el.disabled = true;
+    });
+    // Add unskip button
+    const banner = document.createElement('div');
+    banner.style.cssText = 'background:rgba(240,184,64,0.12);border:1px solid rgba(240,184,64,0.3);border-radius:var(--radius-sm);padding:8px 12px;margin:8px 0;font-size:12px;color:var(--amber);display:flex;align-items:center;justify-content:space-between;gap:8px;';
+    banner.innerHTML = `<span>⊘ Skipped — ${skipState.reason}</span><button class="btn btn-secondary skip-unskip-btn" style="padding:4px 10px;font-size:11px;" onclick="unskipExercise(${idx})">Undo</button>`;
+    banner.id = `skip-banner-${idx}`;
+    const header = card.querySelector('.ex-header');
+    header.after(banner);
+  }
+  closeSkipExercise();
+  toast('Exercise skipped.', 'info');
+}
+
+function unskipExercise(idx) {
+  if (!state.currentSession || !state.currentSession._skipped) return;
+  const exId = state.currentSession._exerciseList[idx];
+  state.currentSession._skipped = state.currentSession._skipped.filter(s => s.exerciseId !== exId);
+  const card = document.getElementById(`ex-card-${idx}`);
+  if (card) {
+    card.style.opacity = '1';
+    card.querySelectorAll('input, button').forEach(el => { el.disabled = false; });
+  }
+  const banner = document.getElementById(`skip-banner-${idx}`);
+  if (banner) banner.remove();
+  toast('Restored.', 'success');
+}
+
+let swapState = { idx: null };
+
+function openSwapExercise(idx) {
+  if (!state.currentSession) return;
+  const exId = state.currentSession._exerciseList[idx];
+  const ex = EXERCISES[exId];
+  if (!ex) return;
+  swapState = { idx };
+  document.getElementById('swap-ex-name').textContent = ex.name;
+  // Find swap candidates: same category, in current skill, not already in session
+  const inSession = new Set(state.currentSession._exerciseList);
+  const candidates = Object.values(EXERCISES).filter(e =>
+    e.category === ex.category &&
+    e.id !== ex.id &&
+    !inSession.has(e.id) &&
+    (e.skills || []).some(sk => (state.user.skill === 'combined' || e.skills.includes(state.user.skill)))
+  );
+  const optsEl = document.getElementById('swap-ex-options');
+  if (!candidates.length) {
+    optsEl.innerHTML = `<div class="note-box" style="font-size:12px;">No alternative exercises available in the "${ex.category}" category for your current skill.</div>`;
+  } else {
+    optsEl.innerHTML = candidates.map(c => {
+      const meta = `${c.sets}×${c.unit === 'reps' ? c.reps + ' reps' : c.holdSec + ' sec'} · ${c.equipment}`;
+      return `<button class="option-pill" style="text-align:left;display:block;width:100%;padding:10px 12px;" onclick="confirmSwapExercise('${c.id}')">
+        <div style="font-weight:600;font-size:13px;">${c.name}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px;font-family:var(--mono);">${meta}</div>
+      </button>`;
+    }).join('');
+  }
+  document.getElementById('swap-ex-modal').classList.add('active');
+}
+
+function closeSwapExercise() {
+  document.getElementById('swap-ex-modal').classList.remove('active');
+  swapState = { idx: null };
+}
+
+function confirmSwapExercise(newExId) {
+  if (swapState.idx === null) return;
+  const idx = swapState.idx;
+  const oldExId = state.currentSession._exerciseList[idx];
+  state.currentSession._exerciseList[idx] = newExId;
+  // Track swap for later analysis
+  if (!state.currentSession._swaps) state.currentSession._swaps = [];
+  state.currentSession._swaps.push({ from: oldExId, to: newExId });
+  closeSwapExercise();
+  toast('Exercise swapped. Re-rendering session…', 'success');
+  // Re-render the session with the updated exercise list
+  // Build fresh filtered list and call startSession with it. We need to preserve sessionId and equipment.
+  const sessionId = state.currentSession.sessionType;
+  const equip = state.currentSession.equipment;
+  const newExercises = state.currentSession._exerciseList.map(eid => EXERCISES[eid]).filter(Boolean);
+  // Preserve skips and swaps across rerender
+  const preservedSkipped = state.currentSession._skipped || [];
+  const preservedSwaps = state.currentSession._swaps || [];
+  startSession(sessionId, newExercises, equip);
+  // Restore preserved metadata after re-render
+  if (state.currentSession) {
+    state.currentSession._skipped = preservedSkipped;
+    state.currentSession._swaps = preservedSwaps;
+    // Re-apply skip visuals
+    preservedSkipped.forEach(sk => {
+      const i = state.currentSession._exerciseList.indexOf(sk.exerciseId);
+      if (i >= 0) {
+        const card = document.getElementById(`ex-card-${i}`);
+        if (card) {
+          card.style.opacity = '0.4';
+          card.querySelectorAll('input, button').forEach(el => { if (!el.classList.contains('skip-unskip-btn')) el.disabled = true; });
+          const banner = document.createElement('div');
+          banner.style.cssText = 'background:rgba(240,184,64,0.12);border:1px solid rgba(240,184,64,0.3);border-radius:var(--radius-sm);padding:8px 12px;margin:8px 0;font-size:12px;color:var(--amber);display:flex;align-items:center;justify-content:space-between;gap:8px;';
+          banner.innerHTML = `<span>⊘ Skipped — ${sk.reason}</span><button class="btn btn-secondary skip-unskip-btn" style="padding:4px 10px;font-size:11px;" onclick="unskipExercise(${i})">Undo</button>`;
+          banner.id = `skip-banner-${i}`;
+          const header = card.querySelector('.ex-header');
+          header.after(banner);
+        }
+      }
+    });
+  }
+}
+
 function endSession() {
   if (!state.currentSession) return;
   const exerciseIds = state.currentSession._exerciseList ||
     (state.program.sessions.find(s => s.id === state.currentSession.sessionType) || state.program.sessions[0]).exercises;
   const exercises = [];
+  const skippedIds = new Set((state.currentSession._skipped || []).map(s => s.exerciseId));
 
   exerciseIds.forEach((eid, idx) => {
     const ex = EXERCISES[eid];
     if (!ex) return;
+    // Skipped exercises: log as skipped with reason, no sets data
+    if (skippedIds.has(eid)) {
+      const skipInfo = (state.currentSession._skipped || []).find(s => s.exerciseId === eid);
+      exercises.push({ id: eid, name: ex.name, sets: [], measure: '', notes: '', skipped: true, skipReason: skipInfo?.reason || 'Unknown' });
+      return;
+    }
     const sets = [];
     for (let s = 1; s <= ex.sets; s++) {
       const reps = document.getElementById(`ex${idx}_s${s}_reps`)?.value || '';
@@ -1959,7 +2251,13 @@ function endSession() {
   const notes = document.getElementById('session-notes')?.value || '';
   state.currentSession.exercises = exercises;
   state.currentSession.notes = notes;
+  // Preserve swap history on the saved session for analysis
+  if (state.currentSession._swaps && state.currentSession._swaps.length) {
+    state.currentSession.swaps = state.currentSession._swaps;
+  }
   delete state.currentSession._exerciseList;
+  delete state.currentSession._skipped;
+  delete state.currentSession._swaps;
 
   Object.values(inlineTimers).forEach(t => clearInterval(t.interval));
   showRPEModal();
@@ -2304,6 +2602,15 @@ function showExHistory(eid, logs) {
   const ex = EXERCISES[eid];
   if (!ex) return;
   let html = `<div class="font-mono font-xs text-dim mb12">Showing ${logs.length} logged session${logs.length !== 1 ? 's' : ''}</div>`;
+
+  // Build measurement chart from logs in chronological order
+  const chartData = buildMeasurementSeries(logs);
+  if (chartData.points.length >= 2) {
+    html += renderMeasurementChart(chartData, ex);
+  } else if (logs.length >= 2) {
+    html += `<div class="note-box" style="margin-bottom:12px;font-size:12px;">📊 Add numeric measurements (cm, degrees, weight, reps) on at least 2 sessions to see a progress chart.</div>`;
+  }
+
   logs.slice().reverse().forEach(log => {
     const d = new Date(log.date).toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
     html += `<div class="card card-sm mb8">
@@ -2322,6 +2629,98 @@ function showExHistory(eid, logs) {
   document.getElementById('log-modal').classList.add('active');
 }
 
+function buildMeasurementSeries(logs) {
+  // Extract first numeric value from measurement string. Ignores leading minus only if it precedes a digit.
+  // Examples: "23cm" → 23, "45°" → 45, "-8cm pancake" → -8, "L-2 R-3" → -2 (first), "yes" → null
+  const sorted = logs.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+  const points = [];
+  let unit = '';
+  sorted.forEach(log => {
+    if (!log.measure) return;
+    const m = String(log.measure).match(/-?\d+(\.\d+)?/);
+    if (!m) return;
+    const val = parseFloat(m[0]);
+    if (isNaN(val)) return;
+    // Capture unit hint (first letter sequence after the number)
+    if (!unit) {
+      const u = String(log.measure).slice(m.index + m[0].length).match(/^\s*([a-zA-Z°"']+)/);
+      if (u) unit = u[1];
+    }
+    points.push({ date: new Date(log.date), value: val });
+  });
+  return { points, unit };
+}
+
+function renderMeasurementChart(data, ex) {
+  const W = 320, H = 120, padL = 30, padR = 12, padT = 12, padB = 22;
+  const innerW = W - padL - padR;
+  const innerH = H - padT - padB;
+  const vals = data.points.map(p => p.value);
+  const min = Math.min(...vals);
+  const max = Math.max(...vals);
+  const range = max - min || 1;
+  // 10% padding on y range
+  const yMin = min - range * 0.1;
+  const yMax = max + range * 0.1;
+  const yRange = yMax - yMin;
+
+  const firstDate = data.points[0].date.getTime();
+  const lastDate = data.points[data.points.length - 1].date.getTime();
+  const xRange = (lastDate - firstDate) || 1;
+
+  const xAt = (d) => padL + ((d.getTime() - firstDate) / xRange) * innerW;
+  const yAt = (v) => padT + innerH - ((v - yMin) / yRange) * innerH;
+
+  // Build path
+  let path = '';
+  data.points.forEach((p, i) => {
+    const x = xAt(p.date);
+    const y = yAt(p.value);
+    path += (i === 0 ? `M ${x.toFixed(1)} ${y.toFixed(1)}` : ` L ${x.toFixed(1)} ${y.toFixed(1)}`);
+  });
+
+  // Trend (compare first and last)
+  const first = data.points[0].value;
+  const last = data.points[data.points.length - 1].value;
+  const delta = last - first;
+  // For some exercises lower = better (e.g. depth in cm to floor), but we can't always know.
+  // Show absolute change with neutral phrasing.
+  const deltaStr = (delta > 0 ? '+' : '') + delta.toFixed(delta % 1 === 0 ? 0 : 1) + (data.unit || '');
+  const trendColor = delta === 0 ? 'var(--text2)' : 'var(--accent)';
+
+  // Y-axis labels (min, max)
+  const yLabelMax = max.toFixed(max % 1 === 0 ? 0 : 1);
+  const yLabelMin = min.toFixed(min % 1 === 0 ? 0 : 1);
+
+  // X-axis labels (first, last dates)
+  const firstLabel = data.points[0].date.toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+  const lastLabel = data.points[data.points.length - 1].date.toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+
+  // Dots
+  let dots = '';
+  data.points.forEach((p) => {
+    dots += `<circle cx="${xAt(p.date).toFixed(1)}" cy="${yAt(p.value).toFixed(1)}" r="3" fill="var(--accent)"/>`;
+  });
+
+  return `<div class="card card-sm mb12" style="padding:12px;">
+    <div class="flex-between mb8">
+      <div class="fw700 font-sm">Progress</div>
+      <div class="font-mono font-xs" style="color:${trendColor};">${deltaStr} over ${data.points.length} sessions</div>
+    </div>
+    <svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;height:auto;max-height:140px;">
+      <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT + innerH}" stroke="var(--border)" stroke-width="1"/>
+      <line x1="${padL}" y1="${padT + innerH}" x2="${W - padR}" y2="${padT + innerH}" stroke="var(--border)" stroke-width="1"/>
+      <text x="${padL - 4}" y="${padT + 4}" text-anchor="end" font-size="9" fill="var(--text3)" font-family="monospace">${yLabelMax}${data.unit || ''}</text>
+      <text x="${padL - 4}" y="${padT + innerH}" text-anchor="end" font-size="9" fill="var(--text3)" font-family="monospace">${yLabelMin}${data.unit || ''}</text>
+      <text x="${padL}" y="${H - 6}" text-anchor="start" font-size="9" fill="var(--text3)" font-family="monospace">${firstLabel}</text>
+      <text x="${W - padR}" y="${H - 6}" text-anchor="end" font-size="9" fill="var(--text3)" font-family="monospace">${lastLabel}</text>
+      <path d="${path}" stroke="var(--accent)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      ${dots}
+    </svg>
+    <div class="font-mono font-xs text-dim" style="margin-top:6px;text-align:center;">${ex.measureLabel}</div>
+  </div>`;
+}
+
 function showSessionLog(sessionId) {
   const s = (state.sessions || []).find(x => x.id === sessionId);
   if (!s) return;
@@ -2338,6 +2737,13 @@ function showSessionLog(sessionId) {
   }
 
   (s.exercises || []).forEach(ex => {
+    if (ex.skipped) {
+      html += `<div class="card card-sm mb8" style="opacity:0.6;border-style:dashed;">
+        <div class="fw700 font-sm" style="color:var(--amber);">⊘ ${ex.name}</div>
+        <div class="font-mono font-xs text-dim mt4">Skipped — ${ex.skipReason || 'no reason given'}</div>
+      </div>`;
+      return;
+    }
     html += `<div class="card card-sm mb8">
       <div class="fw700 font-sm mb8">${ex.name}</div>`;
     (ex.sets || []).forEach(set => {
@@ -2349,6 +2755,17 @@ function showSessionLog(sessionId) {
     if (ex.notes) html += `<div class="font-mono font-xs text-dim mt8">Note: ${ex.notes}</div>`;
     html += `</div>`;
   });
+  // Show swap info if any
+  if (s.swaps && s.swaps.length) {
+    html += `<div class="card card-sm mb8" style="border-style:dashed;">
+      <div class="fw700 font-sm mb4" style="color:var(--accent);">🔄 Swaps made this session</div>`;
+    s.swaps.forEach(sw => {
+      const fromEx = EXERCISES[sw.from];
+      const toEx = EXERCISES[sw.to];
+      html += `<div class="font-mono font-xs text-dim mb4">${fromEx?.name || sw.from} → ${toEx?.name || sw.to}</div>`;
+    });
+    html += `</div>`;
+  }
   if (s.notes) html += `<div class="card card-sm mb8"><div class="fw700 font-sm mb4">Session notes</div><div class="font-sm text-muted">${s.notes}</div></div>`;
   if (s.rpe) html += `<div class="font-mono font-xs text-dim mb12">RPE: ${s.rpe}/10</div>`;
 
