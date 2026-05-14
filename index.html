@@ -185,6 +185,7 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); font
 
 /* ── HIGHLIGHT NOTE ── */
 .note-box { background: rgba(200,240,96,0.06); border: 1px solid rgba(200,240,96,0.2); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 12px; color: var(--text2); line-height: 1.7; margin: 10px 0; }
+.start-position-box { background: rgba(120,160,255,0.06); border-left: 3px solid rgba(120,160,255,0.5); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 12px; color: var(--text2); line-height: 1.7; margin: 6px 0 12px; }
 .warn-box { background: rgba(240,184,64,0.06); border: 1px solid rgba(240,184,64,0.2); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 12px; color: var(--text2); line-height: 1.7; margin: 10px 0; }
 
 /* ── TEMPO DISPLAY ── */
@@ -938,6 +939,49 @@ const EXERCISES = {
     measureLabel: 'Tightest angles found today', approxMin: 8
   }
 };
+
+// ═══════════════════════════════════════════════════════
+// STARTING POSITIONS — explicit setup before any cues
+// Grounded in Matt Smith course transcripts. Body posture + foot/hand placement only.
+// ═══════════════════════════════════════════════════════
+
+const START_POSITIONS = {
+  calf_stretch: 'Stand upright facing a wall (or pole), one hand on the wall for balance. Place the ball of the working foot on a raised edge (step, plate, or block) with the heel hanging off — heel drops below the edge. Working leg straight; back leg can hang loose or rest behind you.',
+  tibialis_raises: 'Sit on the floor or a low bench, working leg straight in front of you. Anchor a resistance band to a low point in front of you and loop the other end around the ball of your working foot. Sit back until the band is under tension with the foot in plantarflexion (pointed away). No band: sit on a chair with feet flat on the floor.',
+  jefferson_curl: 'Stand tall on an elevated surface (box, bench, or stack of plates). Feet flat, together or hip-width apart — toes NOT curled over the edge. Hold a dumbbell, kettlebell, or barbell hanging in front with both hands, arms straight, looking forward. Hips tucked under into a slight posterior tilt.',
+  pike_good_morning: 'Stand tall, feet together. Hold a dumbbell (5–8 kg) on your upper back behind the neck OR overhead with both hands. Stack books in front of you at roughly head height as a target to aim for. Looking forward.',
+  pike_lift_cracr: 'Stand upright in front of a raised surface (couch, bench, low table). Place one foot up on the surface — start at a height you can just barely lift off from. Back leg planted firmly on the floor, standing tall. Arms can hang relaxed or hold something for light balance.',
+  pike_active_lifts: 'Sit on the floor, legs straight together in front of you, toes pointing up. Place both hands flat on the floor on either side of your hips, fingers pointing forward. Sit tall with chest lifted.',
+  passive_pike_hold: 'Sit on the floor with legs straight together in front of you, toes pointing up. Reach forward as far as you can toward your feet — relaxed, no tension.',
+  donkey_calf: 'Bend forward at the hips with both hands resting on a stable support (low bench, box, or chair seat). Place the ball of your working foot on a raised platform (plate or block) — heel hangs off, dropping below. Bend the non-working knee and lift that foot slightly so all body weight loads onto the working calf.',
+  horse_stance_slides: 'Stand in front of a low box, bench, or chair you can hold for support. Feet wider than shoulder width with a strong external rotation of the toes. Hold the support with straight arms. Sit your hips back behind your feet, arch the lower back, lift the chest, look forward — this is the triangle position.',
+  tailors_pose: 'Sit on the floor with your back flat against a wall. Pull both feet in toward your groin so the soles touch fully — toes to heels in contact. Knees fall out to the sides. Hands rest beside your hips or on the floor. (If your calves already touch the floor in this position, sit on a firm block with a block of equal height under each foot.)',
+  horse_stance_squats: 'Stand with feet just wider than shoulder width, toes externally rotated (not full ballet turnout). Hold a dumbbell or kettlebell at chest height in a goblet position. Hips set back behind the feet, lower back arched, chest high, knees pushing out to track over the toes, looking forward — triangle position.',
+  adductor_flyes: 'Lie on your back on the floor. Lift both legs straight up above your hips so they point at the ceiling. Arms rest by your sides on the floor.',
+  isometric_split: 'Stand in a wide stance with feet at a width you can hold in triangle alignment for the full set. Tape the floor at each foot position so you reset to the same spot every session. Sit hips back, arch lower back, chest high, knees tracking over toes. Hands may briefly touch the floor for setup — get them off as soon as possible.',
+  foot_rolling: 'Stand upright next to a wall or chair for balance. Place a lacrosse ball, golf ball, or dense massage ball on the floor in front of you. Lift one foot and place it directly on top of the ball.',
+  pancake_hang_pir: 'Stand on two raised objects (plates, low boxes, or thick books) with a gap between them — one foot on each. Straddle width: feet wider than shoulder width with slight external rotation. Legs straight. Hang forward from the hips into the pancake position, arms relaxed toward the floor. Place a marker (book or block) on the floor between the objects, just barely out of reach.',
+  straddle_jefferson: 'Stand tall on an elevated surface, feet outside shoulder width with slight toe-out. Hold a dumbbell or kettlebell hanging in front with both hands, arms straight. Looking forward, hips tucked slightly under.',
+  pancake_good_morning: 'Sit on the floor in a moderate straddle — slightly narrower than your absolute maximum width. Legs straight, toes up. Hold a weight plate or dumbbell (6–10 kg) at chest height. Stack books in front of you at roughly head height as a target. Sit tall, lower back arched.',
+  pancake_active_lifts: 'Sit on the floor in a straddle position with legs straight. Place both hands flat on the floor between your legs, fingers forward — start with hands close to the hips. Sit tall, chest lifted, looking forward.',
+  block_crush: 'Elevate one leg to roughly hip height by placing the foot on a chair, box, or low table. Open that hip out to the side (pancake orientation). Place a yoga block between your inner thigh and your abdomen. Stand tall on the supporting leg.',
+  drop_stance_squats: 'Stand in a wide straddle stance — wider than your normal squat, feet slightly turned out. Stand tall. Arms can be held out in front for counterbalance or hold a weight at the chest.',
+  kneeling_tilt: 'Kneel on one knee on a soft surface (mat or folded towel). Extend the working leg straight out to the side, foot flat on the floor in line with (or slightly in front of) your hip — never behind. Chest high, slight anterior pelvic tilt (arched lower back), looking forward. Stack blocks beside the working leg as a target.',
+  hanging_magnus: 'Stand upright next to a raised surface (chair, bench, box) at roughly hip height. Bend one leg and rest the foot/shin on the surface, turning that knee out slightly. Standing leg straight, supporting all your weight. Hold a light dumbbell or kettlebell in front with both hands. Stand tall, looking forward.',
+  straight_arm_lifts: 'Sit on the floor in a slightly narrower straddle than usual (better leverage). Legs straight, toes up. Hold a very light dumbbell or plate (0.5–1 kg) in each hand with arms extended forward along the floor between your legs. Lean torso forward into the pancake.',
+  over_straight_arm_lifts: 'Sit on the floor in your deepest pancake position — chest-to-floor or belly-to-floor level. Legs straight in straddle, toes up. Hold very light dumbbells (0.5–1 kg) in each hand, arms extended forward along the floor.',
+  powell_raises: 'Lie on your side on a bench with hips stacked vertically (top hip directly above bottom hip). Knees bent in front of you for stability. Non-working arm bent under your head for support. Working arm holds a light dumbbell with a 5° elbow bend, hanging in front of the body.',
+  trap_raises: 'Set an adjustable bench to ~60°. Lie face-down on the bench in a bent-over supported position — chest on the bench, feet on the floor behind. Hold a light dumbbell in the working hand, arm hanging straight down. Other arm holds the bench for stability.',
+  external_rotation: 'Sit on a bench or low chair. Rest the working elbow on the same-side knee, upper arm horizontal (parallel to the floor). Hold a dumbbell in the working hand with the forearm pointing up as close to vertical as your range allows. Other hand can rest on the other knee.',
+  pec_stretch: 'Stand side-on to a wall or door frame. Place your hand on the wall at roughly ear height with the elbow bent (90° or as needed). Rotate your body away from the wall so the chest opens — feel the stretch across the front of the shoulder/chest.',
+  int_rotation_cr: 'Attach a band to a low anchor. Loop the band around the working wrist, then route the band between your legs from front to back. Standing upright, shuffle away from the anchor until you feel a stretch on the external rotators of the shoulder. Keep the shoulder pinned back throughout — do not let it roll forward.',
+  ext_rotation_cr: 'Sit on a bench. Attach a band to a low anchor at the side. Set up in the elbow-on-knee position (working elbow on knee, upper arm horizontal). Loop the band around the working wrist so it pulls the hand into external rotation. Shuffle away from the anchor until you feel a stretch.',
+  straps_band: 'Anchor a resistance band at a fixed point at any chosen height (depends on angle being trained). Loop the band around your wrist — the "straps grip" hooks behind the wrist between thumb and forefinger so you do not have to grip tight. Walk away from the anchor until you feel tension.'
+};
+
+function getStartPosition(exId) {
+  return START_POSITIONS[exId] || null;
+}
 
 // ═══════════════════════════════════════════════════════
 // PROGRAM TEMPLATES (rule-based generation)
@@ -1926,6 +1970,12 @@ function startSession(sessionId, filteredExercises, equip) {
           <div class="ex-text mb8">${ex.prescription}</div>
           ${altNote}
           ${tempoHtml}
+          ${(() => {
+            const sp = getStartPosition(ex.id);
+            if (!sp) return '';
+            return `<div class="ex-section">Starting position</div>
+              <div class="start-position-box">${sp}</div>`;
+          })()}
           <div class="ex-section">Cues</div>
           <ul class="cue-list mb8">${ex.how.map(h => `<li>${h}</li>`).join('')}</ul>
           <div class="timer-bar">
@@ -3040,6 +3090,12 @@ function renderLibrary() {
             <div class="tempo-display mb8">
               ${ex.tempo.split('-').map((p,i) => `<div class="tempo-cell"><div class="tempo-num">${p}</div><div class="tempo-lbl">${['Lower','Hold bottom','Lift','Hold top'][i]}</div></div>`).join('')}
             </div>` : ''}
+            ${(() => {
+              const sp = getStartPosition(ex.id);
+              if (!sp) return '';
+              return `<div class="ex-section">Starting position</div>
+                <div class="start-position-box">${sp}</div>`;
+            })()}
             <div class="ex-section">How to perform</div>
             <ul class="cue-list">${ex.how.map(h => `<li>${h}</li>`).join('')}</ul>
             <div class="ex-section">What to track</div>
